@@ -1,0 +1,2431 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <title>🎧 Buscador de Audiolibros</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎧</text></svg>">
+    <style>
+        :root {
+            --primary: #3498db;
+            --success: #27ae60;
+            --danger: #e74c3c;
+            --warning: #f39c12;
+            --purple: #9b59b6;
+            --dark: #2c3e50;
+            --light: #f8f9fa;
+            --gray: #7f8c8d;
+            --border: #e9ecef;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        /* Header */
+        .header {
+            text-align: center;
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+            margin-bottom: 30px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(90deg, var(--primary), var(--purple));
+        }
+        
+        .header h1 {
+            color: var(--dark);
+            font-size: 2.8em;
+            margin-bottom: 10px;
+            background: linear-gradient(90deg, var(--primary), var(--purple));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            display: inline-block;
+        }
+        
+        .header p {
+            color: var(--gray);
+            font-size: 1.2em;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        /* Método selector */
+        .method-selector {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .method-btn {
+            padding: 15px 30px;
+            border: 2px solid var(--primary);
+            background: white;
+            color: var(--primary);
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-size: 16px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 200px;
+            justify-content: center;
+        }
+        
+        .method-btn.active {
+            background: var(--primary);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(52, 152, 219, 0.3);
+        }
+        
+        .method-btn:hover:not(.active) {
+            background: var(--light);
+            transform: translateY(-2px);
+        }
+        
+        /* Paneles de búsqueda */
+        .search-panel {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+            margin-bottom: 25px;
+            animation: slideIn 0.5s ease;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .search-panel h2 {
+            color: var(--dark);
+            margin-bottom: 25px;
+            text-align: center;
+            font-size: 1.8em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        /* Formulario de búsqueda */
+        .search-form {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+            align-items: end;
+        }
+        
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .input-group label {
+            font-weight: 600;
+            color: var(--dark);
+            font-size: 0.9em;
+        }
+        
+        .search-input {
+            padding: 16px 20px;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: var(--light);
+        }
+        
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: white;
+            box-shadow: 0 0 0 4px rgba(52, 152, 219, 0.1);
+        }
+        
+        .search-btn {
+            padding: 16px 30px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            min-height: 56px;
+        }
+        
+        .search-btn:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(52, 152, 219, 0.3);
+        }
+        
+        /* Botones rápidos */
+        .quick-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .quick-btn {
+            padding: 12px 24px;
+            background: var(--light);
+            border: 2px solid var(--border);
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .quick-btn:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+        
+        /* Controles */
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: white;
+            padding: 25px;
+            border-radius: 20px;
+            margin-bottom: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        
+        .filter-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .filter-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 50px;
+            background: var(--light);
+            color: var(--dark);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            font-size: 14px;
+        }
+        
+        .filter-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .filter-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .filter-btn.no-encontrados {
+            background: #ffe6e6;
+            color: var(--danger);
+        }
+        
+        .filter-btn.no-encontrados.active {
+            background: var(--danger);
+            color: white;
+        }
+        
+        .counter-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .counter-badge {
+            padding: 8px 16px;
+            border-radius: 50px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .counter-descargados {
+            background: rgba(39, 174, 96, 0.1);
+            color: var(--success);
+        }
+        
+        .counter-noencontrados {
+            background: rgba(231, 76, 60, 0.1);
+            color: var(--danger);
+        }
+        
+        .action-btn {
+            padding: 10px 20px;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-height: 44px;
+        }
+        
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .export-btn { background: var(--success); }
+        .export-btn:hover { background: #219653; }
+        
+        .backup-btn { background: var(--primary); }
+        .backup-btn:hover { background: #2980b9; }
+        
+        .import-btn { background: var(--purple); }
+        .import-btn:hover { background: #8e44ad; }
+        
+        .clear-btn { background: var(--danger); }
+        .clear-btn:hover { background: #c0392b; }
+        
+        /* Estadísticas */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(90deg, var(--primary), var(--purple));
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            color: var(--gray);
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        /* Grid de libros */
+        .books-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+        
+        @media (max-width: 480px) {
+            .books-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .welcome-message {
+            grid-column: 1 / -1;
+            text-align: center;
+            background: white;
+            padding: 50px;
+            border-radius: 20px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+        }
+        
+        .welcome-message h3 {
+            color: var(--dark);
+            margin-bottom: 20px;
+            font-size: 1.8em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .welcome-message p {
+            color: var(--gray);
+            margin-bottom: 15px;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+            line-height: 1.8;
+        }
+        
+        /* Tarjetas de libros */
+        .book-card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            border: 3px solid transparent;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+        
+        .book-card:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+        }
+        
+        .book-card.descargado {
+            background: var(--light);
+            border-color: #bdc3c7;
+            opacity: 0.9;
+        }
+        
+        .book-card.no-encontrado {
+            background: #fff5f5;
+            border-color: var(--danger);
+            opacity: 0.9;
+        }
+        
+        .book-card.descargado .book-title,
+        .book-card.descargado .book-author {
+            text-decoration: line-through;
+            color: var(--gray);
+        }
+        
+        .book-card.no-encontrado .book-title,
+        .book-card.no-encontrado .book-author {
+            color: var(--danger);
+        }
+        
+        /* Checkboxes */
+        .checkbox-container {
+            position: absolute;
+            top: 80px;
+            right: 15px;
+            width: 40%;
+
+            display: grid;
+            gap: 2px;
+            background: white;
+            padding: 1px;
+            border-radius: 50px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 50px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .checkbox-group:hover {
+            background: var(--light);
+        }
+        
+        .checkbox-group.descargado {
+            color: var(--success);
+        }
+        
+        .checkbox-group.no-encontrado {
+            color: var(--danger);
+        }
+        
+        .descargado-checkbox,
+        .no-encontrado-checkbox {
+            width: 22px;
+            height: 22px;
+            cursor: pointer;
+            border-radius: 6px;
+            border: 2px solid var(--border);
+            appearance: none;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        
+        .descargado-checkbox:checked {
+            background: var(--success);
+            border-color: var(--success);
+        }
+        
+        .no-encontrado-checkbox:checked {
+            background: var(--danger);
+            border-color: var(--danger);
+        }
+        
+        .descargado-checkbox:checked::after,
+        .no-encontrado-checkbox:checked::after {
+            content: '✓';
+            position: absolute;
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        
+        .descargado-checkbox:disabled,
+        .no-encontrado-checkbox:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: var(--light);
+        }
+        
+        /* Contenido de tarjeta */
+        .book-header {
+            border-bottom: 2px solid var(--light);
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+            padding-right: 100px;
+        }
+        
+        .book-title {
+            font-size: 1.5em;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 8px;
+            line-height: 1.4;
+        }
+        
+        .book-author {
+            color: var(--primary);
+            font-style: italic;
+            font-weight: 500;
+            font-size: 1.1em;
+        }
+        
+        .fecha-busqueda {
+            color: var(--gray);
+            font-size: 0.85em;
+            display: block;
+            margin-top: 10px;
+        }
+        
+        .book-meta {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .badge {
+            padding: 8px 16px;
+            border-radius: 50px;
+            font-size: 0.85em;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .badge-audio {
+            background: rgba(39, 174, 96, 0.1);
+            color: var(--success);
+        }
+        
+        .badge-educativo {
+            background: rgba(243, 156, 18, 0.1);
+            color: var(--warning);
+        }
+        
+        .badge-torrent {
+            background: rgba(52, 152, 219, 0.1);
+            color: var(--primary);
+        }
+        
+        .badge-directo {
+            background: rgba(155, 89, 182, 0.1);
+            color: var(--purple);
+        }
+        
+        .badge-no-encontrado {
+            background: rgba(231, 76, 60, 0.1);
+            color: var(--danger);
+        }
+        
+        /* Enlaces */
+        .links-section {
+            margin-top: 20px;
+        }
+        
+        .platform-links {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 350px;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+        
+        .platform-links::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .platform-links::-webkit-scrollbar-track {
+            background: var(--light);
+            border-radius: 4px;
+        }
+        
+        .platform-links::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 4px;
+        }
+        
+        .link-item {
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+            background: var(--light);
+            border-radius: 12px;
+            text-decoration: none;
+            color: var(--dark);
+            transition: all 0.3s ease;
+            border-left: 5px solid var(--primary);
+            gap: 15px;
+        }
+        
+        .link-item.torrent {
+            border-left-color: var(--danger);
+        }
+        
+        .link-item.directo {
+            border-left-color: var(--success);
+        }
+        
+        .link-item.audio {
+            border-left-color: var(--purple);
+        }
+        
+        .link-item:hover {
+            background: var(--primary);
+            color: white;
+            transform: translateX(5px);
+        }
+        
+        .link-item:hover .link-type {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .link-icon {
+            font-size: 1.4em;
+            width: 30px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+        
+        .link-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        
+        .link-text {
+            font-weight: 600;
+            font-size: 1em;
+        }
+        
+        .link-url {
+            font-size: 0.85em;
+            color: inherit;
+            opacity: 0.8;
+            word-break: break-all;
+        }
+        
+        .link-type {
+            font-size: 0.75em;
+            font-weight: 700;
+            padding: 4px 12px;
+            border-radius: 50px;
+            background: rgba(0, 0, 0, 0.1);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            flex-shrink: 0;
+        }
+        
+        /* Panel CSV */
+        .csv-upload-section {
+            text-align: center;
+        }
+        
+        .upload-area {
+            border: 3px dashed var(--primary);
+            border-radius: 20px;
+            padding: 50px 30px;
+            margin: 30px 0;
+            background: var(--light);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .upload-area:hover {
+            background: #e8f4f8;
+            border-color: #2980b9;
+        }
+        
+        .upload-area.dragover {
+            background: #d4edda;
+            border-color: var(--success);
+            transform: scale(1.02);
+        }
+        
+        .upload-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+            color: var(--primary);
+        }
+        
+        .upload-hint {
+            color: var(--gray);
+            font-size: 0.95em;
+            margin-top: 15px;
+            line-height: 1.6;
+        }
+        
+        .file-input {
+            display: none;
+        }
+        
+        /* Barra de progreso */
+        .progress-container {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+            margin-bottom: 25px;
+        }
+        
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 24px;
+            background: var(--light);
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--success));
+            border-radius: 12px;
+            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            width: 0%;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(
+                90deg,
+                transparent,
+                rgba(255, 255, 255, 0.4),
+                transparent
+            );
+            animation: shimmer 2s infinite;
+        }
+        
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        
+        .progress-stats {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .progress-stat {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .progress-stat .number {
+            font-size: 1.5em;
+            font-weight: 700;
+        }
+        
+        .progress-stat .label {
+            font-size: 0.85em;
+            color: var(--gray);
+        }
+        
+        /* Footer */
+        .footer {
+            text-align: center;
+            margin-top: 50px;
+            padding: 30px;
+            color: white;
+            opacity: 0.9;
+        }
+        
+        .footer p {
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+        
+        /* Utilidades */
+        .hidden {
+            display: none !important;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .header {
+                padding: 25px 20px;
+            }
+            
+            .header h1 {
+                font-size: 2.2em;
+            }
+            
+            .search-form {
+                grid-template-columns: 1fr;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+                padding: 20px;
+            }
+            
+            .filter-buttons {
+                justify-content: center;
+            }
+            
+            .counter-section {
+                justify-content: center;
+            }
+            
+            .method-btn {
+                min-width: 100%;
+            }
+            
+            .book-card {
+                padding: 25px 20px;
+            }
+            
+            .checkbox-container {
+                top: 20px;
+                right: 20px;
+                padding: 8px;
+            }
+            
+            .book-header {
+                padding-right: 80px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .books-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .header h1 {
+                font-size: 1.8em;
+            }
+            
+            .header p {
+                font-size: 1em;
+            }
+            
+            .stat-card {
+                padding: 20px 15px;
+            }
+            
+            .stat-number {
+                font-size: 2em;
+            }
+            
+            .link-item {
+                padding: 12px 15px;
+            }
+        }
+        
+        /* Mejoras de accesibilidad */
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+        
+        /* Focus styles */
+        button:focus,
+        input:focus,
+        .link-item:focus {
+            outline: 3px solid var(--primary);
+            outline-offset: 3px;
+        }
+        
+        /* Loading state */
+        .loading {
+            position: relative;
+            pointer-events: none;
+            opacity: 0.7;
+        }
+        
+        .loading::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 24px;
+            height: 24px;
+            border: 3px solid var(--light);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            transform: translate(-50%, -50%);
+        }
+        
+        @keyframes spin {
+            to { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎧 Buscador de Audiolibros</h1>
+            <p>Encuentra audiolibros en +30 plataformas • Guardado automático • Compatible con todos los dispositivos</p>
+        </div>
+
+        <!-- Selector de Método de Búsqueda -->
+        <div class="method-selector">
+            <button class="method-btn active" onclick="mostrarBusquedaManual()">
+                <span>🔍</span>
+                <span>Búsqueda Manual</span>
+            </button>
+            <button class="method-btn" onclick="mostrarSubirCSV()">
+                <span>📁</span>
+                <span>Subir CSV</span>
+            </button>
+        </div>
+
+        <!-- Panel de Búsqueda Manual -->
+        <div class="search-panel" id="busquedaManualPanel">
+            <h2><span>🔍</span> Buscar Libros Manualmente</h2>
+            <div class="search-form">
+                <div class="input-group">
+                    <label for="tituloInput">Título del libro</label>
+                    <input type="text" id="tituloInput" placeholder="Ej: Cien años de soledad" class="search-input">
+                </div>
+                <div class="input-group">
+                    <label for="autorInput">Autor (opcional)</label>
+                    <input type="text" id="autorInput" placeholder="Ej: Gabriel García Márquez" class="search-input">
+                </div>
+                <button onclick="buscarLibroManual()" class="search-btn">
+                    <span>🔎</span>
+                    <span>Buscar en Todas las Plataformas</span>
+                </button>
+            </div>
+            
+            <div class="quick-buttons">
+                <button onclick="busquedaRapida('audiolibros')" class="quick-btn">
+                    <span>🎧</span>
+                    <span>Solo Audiolibros</span>
+                </button>
+                <button onclick="busquedaRapida('torrents')" class="quick-btn">
+                    <span>🧲</span>
+                    <span>Solo Torrents</span>
+                </button>
+                <button onclick="busquedaRapida('descargas')" class="quick-btn">
+                    <span>📥</span>
+                    <span>Solo Descargas</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Panel de Subir CSV -->
+        <div class="search-panel hidden" id="subirCSVPanel">
+            <h2><span>📁</span> Subir Archivo CSV</h2>
+            <div class="csv-upload-section">
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-icon">📁</div>
+                    <p style="font-size: 1.2em; font-weight: 600; color: var(--dark); margin-bottom: 10px;">
+                        Arrastra tu archivo CSV aquí
+                    </p>
+                    <p>o haz clic para seleccionar</p>
+                    <p class="upload-hint">
+                        El archivo CSV debe tener columnas: <strong>autor</strong> y <strong>titulo</strong><br>
+                        Formato: autor,titulo (separados por coma)
+                    </p>
+                    <input type="file" id="csvFileInput" accept=".csv" class="file-input">
+                </div>
+                
+                <div class="csv-preview hidden" id="csvPreview">
+                    <h3>📋 Vista Previa del CSV</h3>
+                    <div class="preview-table-container">
+                        <table id="previewTable">
+                            <thead>
+                                <tr>
+                                    <th>Autor</th>
+                                    <th>Título</th>
+                                </tr>
+                            </thead>
+                            <tbody id="previewTableBody"></tbody>
+                        </table>
+                    </div>
+                    <div class="csv-actions">
+                        <button onclick="procesarCSV()" class="process-btn" style="padding: 15px 30px; font-size: 16px;">
+                            <span>🚀</span>
+                            <span>Procesar Todos los Libros</span>
+                        </button>
+                        <button onclick="cancelarCSV()" class="cancel-btn" style="padding: 15px 30px; font-size: 16px;">
+                            <span>❌</span>
+                            <span>Cancelar</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="csv-template">
+                    <h4>📋 Ejemplo de CSV:</h4>
+                    <div class="template-example">
+                        <code style="display: block; padding: 15px; background: var(--light); border-radius: 8px; text-align: left;">
+                            autor,titulo<br>
+                            Gabriel Garcia Marquez,Cien años de soledad<br>
+                            Jane Austen,Orgullo y prejuicio<br>
+                            George Orwell,1984<br>
+                            J.K. Rowling,Harry Potter y la piedra filosofal
+                        </code>
+                    </div>
+                    <button onclick="descargarTemplateCSV()" class="template-btn" style="margin-top: 15px; padding: 12px 24px;">
+                        <span>📥</span>
+                        <span>Descargar Plantilla CSV</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Controles -->
+        <div class="controls">
+            <div class="filter-buttons">
+                <button class="filter-btn active" onclick="filterBooks('all')">Todos</button>
+                <button class="filter-btn" onclick="filterBooks('audio')">Audiolibros</button>
+                <button class="filter-btn" onclick="filterBooks('torrent')">Torrents</button>
+                <button class="filter-btn" onclick="filterBooks('descarga')">Descargas</button>
+                <button class="filter-btn" onclick="filterBooks('descargados')">Descargados</button>
+                <button class="filter-btn no-encontrados" onclick="filterBooks('no-encontrados')">No Encontrados</button>
+            </div>
+            <div class="counter-section">
+                <span class="counter-badge counter-descargados" id="contador-descargados">0 descargados</span>
+                <span class="counter-badge counter-noencontrados" id="contador-no-encontrados">0 no encontrados</span>
+                <button onclick="exportarLista()" class="action-btn export-btn">
+                    <span>💾</span>
+                    <span>Exportar Lista</span>
+                </button>
+                <button onclick="exportarDatosCompletos()" class="action-btn backup-btn">
+                    <span>📤</span>
+                    <span>Exportar Backup</span>
+                </button>
+                <button onclick="importarDatos()" class="action-btn import-btn">
+                    <span>📥</span>
+                    <span>Importar Backup</span>
+                </button>
+                <button onclick="limpiarBusquedas()" class="action-btn clear-btn">
+                    <span>🗑️</span>
+                    <span>Limpiar Todo</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Barra de Progreso para CSV -->
+        <div class="progress-container hidden" id="progressContainer">
+            <div class="progress-header">
+                <h3>📊 Procesando Archivo CSV</h3>
+                <span id="progressText">0/0 libros procesados</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-stats">
+                <div class="progress-stat">
+                    <span class="number" id="processedCount">0</span>
+                    <span class="label">Procesados</span>
+                </div>
+                <div class="progress-stat">
+                    <span class="number" id="successCount">0</span>
+                    <span class="label">Exitosos</span>
+                </div>
+                <div class="progress-stat">
+                    <span class="number" id="errorCount">0</span>
+                    <span class="label">Errores</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Estadísticas -->
+        <div class="stats" id="statsContainer">
+            <div class="stat-card">
+                <div class="stat-number" id="totalLibros">0</div>
+                <div class="stat-label">Total de Libros</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="totalEnlaces">0</div>
+                <div class="stat-label">Enlaces Generados</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="descargadosCount">0</div>
+                <div class="stat-label">Descargados</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="noEncontradosCount">0</div>
+                <div class="stat-label">No Encontrados</div>
+            </div>
+        </div>
+
+        <!-- Grid de Resultados -->
+        <div class="books-grid" id="booksGrid">
+            <div class="welcome-message">
+                <h3><span>👋</span> ¡Bienvenido al Buscador de Audiolibros!</h3>
+                <p>Usa el formulario de arriba para buscar libros individualmente o sube un archivo CSV con tu lista completa de libros.</p>
+                <p><strong>Ejemplo:</strong> Intenta buscar "Cien años de soledad" de "Gabriel García Márquez"</p>
+                <p style="margin-top: 20px; padding: 15px; background: rgba(52, 152, 219, 0.1); border-radius: 12px; color: var(--dark);">
+                    <strong>💡 Consejo:</strong> Marca libros como "No Encontrado" si no los encuentras en ninguna plataforma. 
+                    Los datos se guardan automáticamente en tu navegador.
+                </p>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>✨ Buscador Fácil - Encuentra audiolibros en más de 30 plataformas</p>
+            <p>📱 Compatible con móvil • 💾 Guardado automático • 🔍 Búsqueda avanzada</p>
+        </div>
+    </div>
+
+    <script>
+        // Sistema completo de búsqueda de audiolibros
+        class BuscadorAudiolibros {
+            constructor() {
+                this.libros = JSON.parse(localStorage.getItem('librosGuardados')) || [];
+                this.librosDescargados = JSON.parse(localStorage.getItem('librosDescargados')) || {};
+                this.librosNoEncontrados = JSON.parse(localStorage.getItem('librosNoEncontrados')) || {};
+                this.csvData = [];
+                this.init();
+            }
+
+            init() {
+                this.actualizarContadores();
+                this.configurarDragAndDrop();
+                this.cargarLibrosGuardados();
+                this.actualizarEstadisticas();
+                
+                // Cargar datos de ejemplo si está vacío
+                if (this.libros.length === 0 && localStorage.getItem('datosEjemplo') !== 'cargados') {
+                    setTimeout(() => this.cargarDatosEjemplo(), 1000);
+                }
+            }
+
+            cargarDatosEjemplo() {
+                const ejemplos = [
+                    { titulo: "Cien años de soledad", autor: "Gabriel García Márquez" },
+                    { titulo: "1984", autor: "George Orwell" },
+                    { titulo: "Orgullo y prejuicio", autor: "Jane Austen" }
+                ];
+                
+                // Solo mostrar mensaje si el usuario no ha interactuado aún
+                if (document.getElementById('tituloInput').value === '') {
+                    ejemplos.forEach((libro, index) => {
+                        setTimeout(() => {
+                            this.buscarLibro(libro.titulo, libro.autor, 'completa');
+                        }, index * 500);
+                    });
+                    
+                    localStorage.setItem('datosEjemplo', 'cargados');
+                }
+            }
+
+            cargarLibrosGuardados() {
+                if (this.libros.length > 0) {
+                    this.mostrarLibros();
+                }
+            }
+
+            guardarDatos() {
+                try {
+                    localStorage.setItem('librosGuardados', JSON.stringify(this.libros));
+                    localStorage.setItem('librosDescargados', JSON.stringify(this.librosDescargados));
+                    localStorage.setItem('librosNoEncontrados', JSON.stringify(this.librosNoEncontrados));
+                } catch (e) {
+                    console.warn('No se pudieron guardar los datos:', e);
+                    // Limpiar datos antiguos si hay error de almacenamiento
+                    if (e.name === 'QuotaExceededError') {
+                        this.limpiarCacheAntiguo();
+                    }
+                }
+            }
+
+            limpiarCacheAntiguo() {
+                // Mantener solo los últimos 50 libros si hay problema de espacio
+                if (this.libros.length > 50) {
+                    this.libros = this.libros.slice(0, 50);
+                    this.guardarDatos();
+                    alert('Se han eliminado libros antiguos para liberar espacio.');
+                }
+            }
+
+            exportarDatosCompletos() {
+                if (this.libros.length === 0) {
+                    this.mostrarNotificacion('No hay datos para exportar', 'warning');
+                    return;
+                }
+
+                const datos = {
+                    libros: this.libros,
+                    librosDescargados: this.librosDescargados,
+                    librosNoEncontrados: this.librosNoEncontrados,
+                    fechaExportacion: new Date().toISOString(),
+                    version: '2.1',
+                    totalLibros: this.libros.length
+                };
+
+                const contenido = JSON.stringify(datos, null, 2);
+                const blob = new Blob([contenido], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                const fecha = new Date().toISOString().split('T')[0];
+                a.download = `audiolibros_backup_${fecha}.json`;
+                
+                // Agregar animación de descarga
+                a.style.display = 'none';
+                document.body.appendChild(a);
+                a.click();
+                
+                // Limpiar
+                setTimeout(() => {
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    this.mostrarNotificacion('Backup exportado correctamente', 'success');
+                }, 100);
+            }
+
+            importarDatos() {
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = '.json';
+                
+                input.onchange = (e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    
+                    // Mostrar carga
+                    const btn = event.target;
+                    const originalText = btn.innerHTML;
+                    btn.innerHTML = '<span class="loading"></span>';
+                    btn.disabled = true;
+                    
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        try {
+                            const datos = JSON.parse(event.target.result);
+                            
+                            // Validar datos
+                            if (!datos.libros || !Array.isArray(datos.libros)) {
+                                throw new Error('Formato de archivo inválido');
+                            }
+                            
+                            setTimeout(() => {
+                                if (confirm(`¿Importar ${datos.libros.length} libros y sobrescribir datos actuales?`)) {
+                                    this.libros = datos.libros || [];
+                                    this.librosDescargados = datos.librosDescargados || {};
+                                    this.librosNoEncontrados = datos.librosNoEncontrados || {};
+                                    
+                                    this.guardarDatos();
+                                    this.mostrarLibros();
+                                    this.actualizarEstadisticas();
+                                    this.actualizarContadores();
+                                    
+                                    this.mostrarNotificacion(`Importados ${datos.libros.length} libros correctamente`, 'success');
+                                }
+                            }, 300);
+                        } catch (error) {
+                            this.mostrarNotificacion(`Error: ${error.message}`, 'error');
+                        } finally {
+                            btn.innerHTML = originalText;
+                            btn.disabled = false;
+                        }
+                    };
+                    
+                    reader.onerror = () => {
+                        this.mostrarNotificacion('Error al leer el archivo', 'error');
+                        btn.innerHTML = originalText;
+                        btn.disabled = false;
+                    };
+                    
+                    reader.readAsText(file);
+                };
+                
+                input.click();
+            }
+
+            mostrarNotificacion(mensaje, tipo = 'info') {
+                // Crear notificación
+                const notificacion = document.createElement('div');
+                notificacion.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    padding: 15px 25px;
+                    border-radius: 12px;
+                    color: white;
+                    font-weight: 500;
+                    z-index: 10000;
+                    animation: slideInRight 0.3s ease;
+                    box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    max-width: 400px;
+                `;
+                
+                const colores = {
+                    success: '#27ae60',
+                    error: '#e74c3c',
+                    warning: '#f39c12',
+                    info: '#3498db'
+                };
+                
+                const iconos = {
+                    success: '✅',
+                    error: '❌',
+                    warning: '⚠️',
+                    info: 'ℹ️'
+                };
+                
+                notificacion.style.background = colores[tipo];
+                notificacion.innerHTML = `${iconos[tipo]} ${mensaje}`;
+                
+                document.body.appendChild(notificacion);
+                
+                // Auto-eliminar después de 4 segundos
+                setTimeout(() => {
+                    notificacion.style.animation = 'slideOutRight 0.3s ease';
+                    setTimeout(() => {
+                        document.body.removeChild(notificacion);
+                    }, 300);
+                }, 4000);
+                
+                // Agregar estilos de animación
+                if (!document.getElementById('notificacion-estilos')) {
+                    const estilos = document.createElement('style');
+                    estilos.id = 'notificacion-estilos';
+                    estilos.textContent = `
+                        @keyframes slideInRight {
+                            from { transform: translateX(100%); opacity: 0; }
+                            to { transform: translateX(0); opacity: 1; }
+                        }
+                        @keyframes slideOutRight {
+                            from { transform: translateX(0); opacity: 1; }
+                            to { transform: translateX(100%); opacity: 0; }
+                        }
+                    `;
+                    document.head.appendChild(estilos);
+                }
+            }
+
+            configurarDragAndDrop() {
+                const uploadArea = document.getElementById('uploadArea');
+                const fileInput = document.getElementById('csvFileInput');
+
+                uploadArea.addEventListener('click', () => fileInput.click());
+
+                uploadArea.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    uploadArea.classList.add('dragover');
+                });
+
+                uploadArea.addEventListener('dragleave', () => {
+                    uploadArea.classList.remove('dragover');
+                });
+
+                uploadArea.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    uploadArea.classList.remove('dragover');
+                    const files = e.dataTransfer.files;
+                    if (files.length > 0) {
+                        this.procesarArchivoCSV(files[0]);
+                    }
+                });
+
+                fileInput.addEventListener('change', (e) => {
+                    if (e.target.files.length > 0) {
+                        this.procesarArchivoCSV(e.target.files[0]);
+                    }
+                });
+            }
+
+            procesarArchivoCSV(file) {
+                if (!file.name.toLowerCase().endsWith('.csv')) {
+                    this.mostrarNotificacion('Por favor selecciona un archivo CSV válido', 'error');
+                    return;
+                }
+
+                // Mostrar carga
+                const uploadArea = document.getElementById('uploadArea');
+                const originalHTML = uploadArea.innerHTML;
+                uploadArea.innerHTML = '<div class="loading"></div>';
+                uploadArea.style.pointerEvents = 'none';
+
+                const reader = new FileReader();
+                
+                reader.onload = (e) => {
+                    try {
+                        const csvContent = e.target.result;
+                        this.csvData = this.parseCSV(csvContent);
+                        
+                        if (this.csvData.length === 0) {
+                            this.mostrarNotificacion('El archivo CSV está vacío o tiene formato incorrecto', 'warning');
+                            return;
+                        }
+
+                        this.mostrarVistaPreviaCSV();
+                        this.mostrarNotificacion(`CSV cargado: ${this.csvData.length} libros encontrados`, 'success');
+                    } catch (error) {
+                        this.mostrarNotificacion(`Error: ${error.message}`, 'error');
+                    } finally {
+                        uploadArea.innerHTML = originalHTML;
+                        uploadArea.style.pointerEvents = 'auto';
+                    }
+                };
+
+                reader.onerror = () => {
+                    this.mostrarNotificacion('Error al leer el archivo', 'error');
+                    uploadArea.innerHTML = originalHTML;
+                    uploadArea.style.pointerEvents = 'auto';
+                };
+
+                reader.readAsText(file);
+            }
+
+            parseCSV(csvText) {
+                const lines = csvText.split('\n').filter(line => line.trim() !== '');
+                if (lines.length < 2) return [];
+
+                const firstLine = lines[0];
+                const delimiter = firstLine.includes(';') ? ';' : ',';
+                const headers = firstLine.split(delimiter).map(h => h.trim().toLowerCase());
+                
+                const autorIndex = headers.findIndex(h => h.includes('autor'));
+                const tituloIndex = headers.findIndex(h => h.includes('titulo') || h.includes('título'));
+
+                if (autorIndex === -1 || tituloIndex === -1) {
+                    throw new Error('El CSV debe tener columnas "autor" y "titulo"');
+                }
+
+                const data = [];
+                for (let i = 1; i < lines.length; i++) {
+                    const line = lines[i];
+                    // Manejar comas dentro de comillas
+                    const cells = [];
+                    let inQuotes = false;
+                    let currentCell = '';
+                    
+                    for (let j = 0; j < line.length; j++) {
+                        const char = line[j];
+                        const nextChar = line[j + 1];
+                        
+                        if (char === '"') {
+                            inQuotes = !inQuotes;
+                        } else if (char === delimiter && !inQuotes) {
+                            cells.push(currentCell.trim().replace(/^"|"$/g, ''));
+                            currentCell = '';
+                        } else {
+                            currentCell += char;
+                        }
+                    }
+                    cells.push(currentCell.trim().replace(/^"|"$/g, ''));
+                    
+                    if (cells.length > Math.max(autorIndex, tituloIndex)) {
+                        const autor = cells[autorIndex] || 'Autor Desconocido';
+                        const titulo = cells[tituloIndex];
+                        
+                        if (titulo && titulo.trim() !== '') {
+                            data.push({
+                                autor: autor,
+                                titulo: titulo,
+                                originalLine: i + 1
+                            });
+                        }
+                    }
+                }
+
+                return data;
+            }
+
+            mostrarVistaPreviaCSV() {
+                const previewBody = document.getElementById('previewTableBody');
+                previewBody.innerHTML = '';
+
+                const previewData = this.csvData.slice(0, 15);
+                previewData.forEach(row => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${this.escapeHtml(row.autor)}</td>
+                        <td>${this.escapeHtml(row.titulo)}</td>
+                    `;
+                    previewBody.appendChild(tr);
+                });
+
+                if (this.csvData.length > 15) {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td colspan="2" style="text-align: center; padding: 20px; color: var(--gray); font-style: italic; background: var(--light);">
+                            ... y ${this.csvData.length - 15} libros más
+                        </td>
+                    `;
+                    previewBody.appendChild(tr);
+                }
+
+                document.getElementById('csvPreview').classList.remove('hidden');
+                
+                // Scroll suave a la vista previa
+                document.getElementById('csvPreview').scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'nearest' 
+                });
+            }
+
+            escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            async procesarTodoCSV() {
+                if (this.csvData.length === 0) {
+                    this.mostrarNotificacion('No hay datos CSV para procesar', 'warning');
+                    return;
+                }
+
+                if (!confirm(`¿Procesar ${this.csvData.length} libros del CSV?`)) {
+                    return;
+                }
+
+                this.mostrarBarraProgreso();
+                const totalLibros = this.csvData.length;
+                let procesados = 0, exitosos = 0, errores = 0;
+
+                for (const libroData of this.csvData) {
+                    try {
+                        await this.procesarLibroCSV(libroData);
+                        exitosos++;
+                    } catch (error) {
+                        console.error('Error procesando libro:', libroData, error);
+                        errores++;
+                    }
+
+                    procesados++;
+                    this.actualizarBarraProgreso(procesados, totalLibros, exitosos, errores);
+                    
+                    // Pequeña pausa para no saturar
+                    await new Promise(resolve => setTimeout(resolve, 150));
+                }
+
+                this.ocultarBarraProgreso();
+                
+                // Mostrar resumen
+                const mensaje = `Procesamiento completado:\n✅ ${exitosos} exitosos\n❌ ${errores} errores`;
+                if (errores > 0) {
+                    this.mostrarNotificacion(mensaje, errores === totalLibros ? 'error' : 'warning');
+                } else {
+                    this.mostrarNotificacion(mensaje, 'success');
+                }
+            }
+
+            async procesarLibroCSV(libroData) {
+                return new Promise((resolve) => {
+                    setTimeout(() => {
+                        this.buscarLibro(libroData.titulo, libroData.autor, 'completa');
+                        resolve();
+                    }, 0);
+                });
+            }
+
+            mostrarBarraProgreso() {
+                const container = document.getElementById('progressContainer');
+                container.classList.remove('hidden');
+                container.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+
+            actualizarBarraProgreso(procesados, total, exitosos, errores) {
+                const porcentaje = (procesados / total) * 100;
+                
+                document.getElementById('progressFill').style.width = `${porcentaje}%`;
+                document.getElementById('progressText').textContent = 
+                    `${procesados}/${total} libros (${Math.round(porcentaje)}%)`;
+                document.getElementById('processedCount').textContent = procesados;
+                document.getElementById('successCount').textContent = exitosos;
+                document.getElementById('errorCount').textContent = errores;
+            }
+
+            ocultarBarraProgreso() {
+                setTimeout(() => {
+                    document.getElementById('progressContainer').classList.add('hidden');
+                }, 1000);
+            }
+
+            cancelarProcesamientoCSV() {
+                this.csvData = [];
+                document.getElementById('csvPreview').classList.add('hidden');
+                document.getElementById('csvFileInput').value = '';
+                this.mostrarNotificacion('Procesamiento cancelado', 'info');
+            }
+
+            descargarTemplateCSV() {
+                const template = `autor,titulo
+Gabriel Garcia Marquez,Cien años de soledad
+Jane Austen,Orgullo y prejuicio
+George Orwell,1984
+J.K. Rowling,Harry Potter y la piedra filosofal
+Miguel de Cervantes,Don Quijote de la Mancha
+Isabel Allende,La casa de los espíritus
+Mario Vargas Llosa,La ciudad y los perros
+Julio Cortázar,Rayuela
+Pablo Neruda,Veinte poemas de amor y una canción desesperada
+Stephen King,El resplandor`;
+
+                const blob = new Blob([template], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'plantilla_libros.csv';
+                a.click();
+                URL.revokeObjectURL(url);
+                
+                this.mostrarNotificacion('Plantilla descargada', 'success');
+            }
+
+            limpiarBusquedas() {
+                if (this.libros.length === 0) {
+                    this.mostrarNotificacion('No hay búsquedas para limpiar', 'info');
+                    return;
+                }
+
+                if (confirm(`¿Limpiar ${this.libros.length} libros? Esta acción no se puede deshacer.`)) {
+                    this.libros = [];
+                    this.librosDescargados = {};
+                    this.librosNoEncontrados = {};
+                    this.mostrarLibros();
+                    this.actualizarEstadisticas();
+                    this.actualizarContadores();
+                    this.guardarDatos();
+                    
+                    this.mostrarNotificacion('Todas las búsquedas han sido limpiadas', 'success');
+                }
+            }
+
+            generarEnlaces(titulo, autor) {
+                const query = `${titulo} ${autor}`.trim();
+                const queryEncoded = encodeURIComponent(query);
+                const querySimple = query.replace(/\s+/g, '+');
+                const queryZlib = query.toLowerCase().replace(/\s+/g, '%20');
+
+                return {
+                    // Z-LIBRARY Y DESCARGAS
+                    'Z-Library': `https://z-library.ec/s/${queryZlib}`,
+                    'LibGen': `https://libgen.is/search.php?req=${queryEncoded}`,
+                    'WeLib': `https://welib.org/search?q=${querySimple}`,
+                    
+                    // NUEVOS ENLACES SOLICITADOS
+                    'AudioBookBay': `https://audiobookbay.lu/?s=${querySimple}&cat=undefined%2Cund`,
+                    'FullLengthAudiobooks': `https://fulllengthaudiobooks.net/?s=${querySimple}`,
+                    'Liber3': `https://liber3.eth.limo/#/search?q=${queryEncoded}`,
+                    'Tokybook': `https://tokybook.com/search?q=${queryEncoded}`,
+                    
+                    // AUDIOLIBROS GRATUITOS
+                    'Librivox': `https://librivox.org/search?q=${queryEncoded}`,
+                    'Internet Archive Audio': `https://archive.org/search.php?query=${queryEncoded}+audio`,
+                    'Open Library Audio': `https://openlibrary.org/search?q=${queryEncoded}&has_fulltext=true`,
+                    'Loyal Books': `https://www.loyalbooks.com/search/?q=${queryEncoded}`,
+                    
+                    // AUDIOLIBROS COMERCIALES
+                    'Audible': `https://www.audible.com/search?keywords=${queryEncoded}`,
+                    'Google Play Audiobooks': `https://play.google.com/store/search?q=${queryEncoded}&c=books`,
+                    'Apple Audiobooks': `https://books.apple.com/us/search?term=${queryEncoded}`,
+                    'Storytel': `https://www.storytel.com/search?q=${queryEncoded}`,
+                    
+                    // VIDEO Y STREAMING
+                    'YouTube Audiolibros': `https://www.youtube.com/results?search_query=${queryEncoded}+audiolibro+completo`,
+                    'Spotify Audiobooks': `https://open.spotify.com/search/${queryEncoded}`,
+                    
+                    // TORRENTS
+                    '1337x Audio': `https://1337x.to/search/${queryEncoded}+audiobook/1/`,
+                    'The Pirate Bay Audio': `https://thepiratebay.org/search.php?q=${queryEncoded}`,
+                    
+                    // PLATAFORMAS DE LIBROS
+                    'Amazon': `https://www.amazon.com/s?k=${queryEncoded}`,
+                    'Google Books': `https://www.google.com/search?q=${queryEncoded}+libro`,
+                    
+                    // OTROS
+                    'Project Gutenberg': `https://www.gutenberg.org/ebooks/search/?query=${queryEncoded}`,
+                    'ManyBooks': `https://manybooks.net/search-book?search=${querySimple}`,
+                    'BookBub': `https://www.bookbub.com/search?search=${queryEncoded}`,
+                    'Goodreads': `https://www.goodreads.com/search?q=${queryEncoded}`,
+                    'Scribd': `https://www.scribd.com/search?query=${queryEncoded}`,
+                    'OverDrive': `https://www.overdrive.com/search?q=${queryEncoded}`
+                };
+            }
+
+            analizarEnlace(plataforma, url) {
+                let tipo = 'BUSQUEDA';
+                let icono = '🔗';
+                let esDirecto = false;
+
+                const plataformaLower = plataforma.toLowerCase();
+                const urlLower = url.toLowerCase();
+
+                if (urlLower.includes('audio') || urlLower.includes('audiolibro') || 
+                    plataformaLower.includes('audio') || plataformaLower.includes('audiobook')) {
+                    tipo = 'AUDIOLIBRO';
+                }
+                if (urlLower.includes('z-library') || urlLower.includes('libgen') || 
+                    urlLower.includes('download') || urlLower.includes('welib')) {
+                    tipo = 'DESCARGA';
+                }
+                if (urlLower.includes('torrent') || plataformaLower.includes('1337x') || 
+                    plataformaLower.includes('pirate')) {
+                    tipo = 'TORRENT';
+                }
+                if (urlLower.includes('amazon') || urlLower.includes('audible') || 
+                    urlLower.includes('googleplay') || urlLower.includes('apple') ||
+                    urlLower.includes('comprar') || urlLower.includes('buy')) {
+                    tipo = 'COMPRA';
+                }
+
+                if (urlLower.includes('.mp3') || urlLower.includes('.m4b') || 
+                    urlLower.includes('.wav') || urlLower.includes('direct')) {
+                    esDirecto = true;
+                }
+
+                const iconos = {
+                    // Z-Library y descargas
+                    'Z-Library': '📥', 'LibGen': '📚', 'WeLib': '📖',
+                    
+                    // Nuevos enlaces
+                    'Liber3': '🔍', 'AudioBookBay': '🎧', 
+                    'FullLengthAudiobooks': '🎵', 'Tokybook': '🇯🇵',
+                    
+                    // Audiolibros gratuitos
+                    'Librivox': '🆓', 'Internet Archive Audio': '🏛️', 
+                    'Open Library Audio': '📖', 'Loyal Books': '📚',
+                    'Project Gutenberg': '📜',
+                    
+                    // Audiolibros comerciales
+                    'Audible': '🔊', 'Google Play Audiobooks': '📱', 
+                    'Apple Audiobooks': '🍎', 'Storytel': '🎭',
+                    
+                    // Video y streaming
+                    'YouTube Audiolibros': '🎥', 'Spotify Audiobooks': '🎵',
+                    
+                    // Torrents
+                    '1337x Audio': '🧲', 'The Pirate Bay Audio': '🏴‍☠️',
+                    
+                    // Plataformas de libros
+                    'Amazon': '🛒', 'Google Books': '🔍',
+                    'ManyBooks': '📚', 'BookBub': '📖',
+                    'Goodreads': '⭐', 'Scribd': '📄',
+                    'OverDrive': '📲'
+                };
+
+                icono = iconos[plataforma] || '🔗';
+
+                return { tipo, icono, esDirecto };
+            }
+
+            buscarLibro(titulo, autor, tipoBusqueda = 'completa') {
+                if (!titulo.trim()) {
+                    this.mostrarNotificacion('Por favor ingresa al menos el título del libro', 'warning');
+                    document.getElementById('tituloInput').focus();
+                    return;
+                }
+
+                if (!autor.trim()) {
+                    autor = 'Autor Desconocido';
+                }
+
+                // Verificar si ya existe un libro similar
+                const libroExistente = this.libros.find(libro => 
+                    libro.titulo.toLowerCase() === titulo.toLowerCase() && 
+                    libro.autor.toLowerCase() === autor.toLowerCase()
+                );
+
+                if (libroExistente) {
+                    if (confirm('Este libro ya fue buscado. ¿Buscar de nuevo?')) {
+                        // Eliminar el existente
+                        this.libros = this.libros.filter(libro => libro.id !== libroExistente.id);
+                        delete this.librosDescargados[libroExistente.id];
+                        delete this.librosNoEncontrados[libroExistente.id];
+                    } else {
+                        return;
+                    }
+                }
+
+                const libroId = `libro_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+                const libro = {
+                    id: libroId,
+                    titulo: titulo.trim(),
+                    autor: autor.trim(),
+                    esEducativo: this.esEducativo(titulo) ? 'Sí' : 'No',
+                    prioridadAudio: this.esEducativo(titulo) ? 'MEDIA' : 'ALTA',
+                    enlaces: [],
+                    fechaBusqueda: new Date().toISOString(),
+                    timestamp: Date.now()
+                };
+
+                const todosEnlaces = this.generarEnlaces(titulo, autor);
+                let enlacesFiltrados = 0;
+                
+                Object.entries(todosEnlaces).forEach(([plataforma, url]) => {
+                    const analisis = this.analizarEnlace(plataforma, url);
+                    
+                    // Filtrar según tipo de búsqueda
+                    let incluir = true;
+                    if (tipoBusqueda === 'audiolibros') {
+                        incluir = ['AUDIOLIBRO', 'TORRENT'].includes(analisis.tipo);
+                    } else if (tipoBusqueda === 'torrents') {
+                        incluir = analisis.tipo === 'TORRENT';
+                    } else if (tipoBusqueda === 'descargas') {
+                        incluir = ['DESCARGA', 'TORRENT'].includes(analisis.tipo);
+                    }
+
+                    if (incluir) {
+                        libro.enlaces.push({
+                            plataforma: plataforma,
+                            url: url,
+                            tipo: analisis.tipo,
+                            icono: analisis.icono,
+                            esDirecto: analisis.esDirecto
+                        });
+                        enlacesFiltrados++;
+                    }
+                });
+
+                if (enlacesFiltrados === 0 && tipoBusqueda !== 'completa') {
+                    this.mostrarNotificacion(`No se encontraron enlaces del tipo "${tipoBusqueda}"`, 'warning');
+                    return;
+                }
+
+                this.libros.unshift(libro);
+                this.mostrarLibros();
+                this.actualizarEstadisticas();
+                this.guardarDatos();
+
+                // Limpiar formulario
+                document.getElementById('tituloInput').value = '';
+                document.getElementById('autorInput').value = '';
+                document.getElementById('tituloInput').focus();
+
+                // Mostrar notificación
+                const mensaje = tipoBusqueda === 'completa' 
+                    ? `"${titulo}" - ${enlacesFiltrados} enlaces encontrados`
+                    : `"${titulo}" - ${enlacesFiltrados} enlaces de ${tipoBusqueda}`;
+                this.mostrarNotificacion(mensaje, 'success');
+            }
+
+            mostrarLibros() {
+                const grid = document.getElementById('booksGrid');
+                
+                if (this.libros.length === 0) {
+                    grid.innerHTML = `
+                        <div class="welcome-message">
+                            <h3><span>👋</span> ¡Comienza a buscar audiolibros!</h3>
+                            <p>Usa el formulario de arriba para buscar libros individualmente o sube un archivo CSV con tu lista completa.</p>
+                            <p><strong>Ejemplo de búsqueda:</strong> "Cien años de soledad" de "Gabriel García Márquez"</p>
+                            <div style="margin-top: 30px; padding: 20px; background: rgba(52, 152, 219, 0.1); border-radius: 12px;">
+                                <p style="color: var(--dark); margin-bottom: 10px;"><strong>💡 Características:</strong></p>
+                                <ul style="text-align: left; max-width: 600px; margin: 0 auto; color: var(--gray);">
+                                    <li>🔍 Búsqueda en más de 30 plataformas</li>
+                                    <li>💾 Guardado automático en tu navegador</li>
+                                    <li>📱 Compatible con móviles y tablets</li>
+                                    <li>📤 Exporta e importa tus datos</li>
+                                    <li>✓ Marca libros como descargados o no encontrados</li>
+                                </ul>
+                            </div>
+                        </div>
+                    `;
+                    return;
+                }
+
+                grid.innerHTML = this.libros.map(libro => this.crearTarjetaLibro(libro)).join('');
+                this.aplicarMarcadoresGuardados();
+            }
+
+            crearTarjetaLibro(libro) {
+                const torrentCount = libro.enlaces.filter(e => e.tipo === 'TORRENT').length;
+                const directoCount = libro.enlaces.filter(e => e.esDirecto).length;
+                const audioCount = libro.enlaces.filter(e => e.tipo === 'AUDIOLIBRO').length;
+                const fecha = new Date(libro.fechaBusqueda).toLocaleDateString('es-ES', {
+                    day: '2-digit',
+                    month: 'short',
+                    year: 'numeric'
+                });
+                const esDescargado = this.librosDescargados[libro.id];
+                const esNoEncontrado = this.librosNoEncontrados[libro.id];
+
+                return `
+                    <div class="book-card ${esDescargado ? 'descargado' : ''} ${esNoEncontrado ? 'no-encontrado' : ''}" id="card_${libro.id}">
+                        <div class="checkbox-container">
+                            <div class="checkbox-group descargado">
+                                <input type="checkbox" id="check_descargado_${libro.id}" class="descargado-checkbox" 
+                                       onchange="buscador.actualizarMarcador('descargado', this)" 
+                                       ${esDescargado ? 'checked' : ''} 
+                                       ${esNoEncontrado ? 'disabled' : ''}>
+                                <label for="check_descargado_${libro.id}" title="Marcar como descargado">
+                                    <span style="font-size: 1.2em;">✓</span>
+                                    <span style="font-size: 0.8em;">Descargado</span>
+                                </label>
+                            </div>
+                            
+                            <div class="checkbox-group no-encontrado">
+                                <input type="checkbox" id="check_noencontrado_${libro.id}" class="no-encontrado-checkbox" 
+                                       onchange="buscador.actualizarMarcador('no-encontrado', this)" 
+                                       ${esNoEncontrado ? 'checked' : ''} 
+                                       ${esDescargado ? 'disabled' : ''}>
+                                <label for="check_noencontrado_${libro.id}" title="Marcar como no encontrado">
+                                    <span style="font-size: 1.2em;">✗</span>
+                                    <span style="font-size: 0.8em;">No Encontrado</span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="book-header">
+                            <div class="book-title">${this.escapeHtml(libro.titulo)}</div>
+                            <div class="book-author">${this.escapeHtml(libro.autor)}</div>
+                            <small class="fecha-busqueda">Búsqueda: ${fecha}</small>
+                        </div>
+                        
+                        <div class="book-meta">
+                            <span class="badge ${libro.prioridadAudio === 'ALTA' ? 'badge-audio' : 'badge-educativo'}">
+                                ${libro.prioridadAudio === 'ALTA' ? '🎧' : '📚'} ${libro.prioridadAudio}
+                            </span>
+                            <span class="badge ${libro.esEducativo === 'Sí' ? 'badge-educativo' : 'badge-descarga'}">
+                                📚 ${libro.esEducativo}
+                            </span>
+                            ${torrentCount > 0 ? `<span class="badge badge-torrent">🧲 ${torrentCount} torrents</span>` : ''}
+                            ${directoCount > 0 ? `<span class="badge badge-directo">📥 ${directoCount} directos</span>` : ''}
+                            ${audioCount > 0 ? `<span class="badge badge-audio">🎧 ${audioCount} audiolibros</span>` : ''}
+                            ${esNoEncontrado ? `<span class="badge badge-no-encontrado">✗ No Encontrado</span>` : ''}
+                        </div>
+                        
+                        <div class="links-section">
+                            <div class="platform-links">
+                                ${libro.enlaces.map(enlace => `
+                                    <a href="${enlace.url}" target="_blank" rel="noopener noreferrer" 
+                                       class="link-item ${enlace.tipo.toLowerCase()}"
+                                       title="${enlace.plataforma} - ${enlace.url}">
+                                        <span class="link-icon">${enlace.icono}</span>
+                                        <div class="link-content">
+                                            <span class="link-text">${enlace.plataforma}</span>
+                                            <span class="link-url">${this.acortarURL(enlace.url)}</span>
+                                        </div>
+                                        <span class="link-type">${enlace.tipo}</span>
+                                    </a>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            acortarURL(url, maxLength = 50) {
+                if (url.length <= maxLength) return url;
+                return url.substring(0, maxLength) + '...';
+            }
+
+            actualizarMarcador(tipo, checkbox) {
+                const card = checkbox.closest('.book-card');
+                const libroId = checkbox.id.replace(`check_${tipo}_`, '');
+                
+                const descargadoCheckbox = document.getElementById(`check_descargado_${libroId}`);
+                const noEncontradoCheckbox = document.getElementById(`check_noencontrado_${libroId}`);
+                
+                if (tipo === 'descargado') {
+                    if (checkbox.checked) {
+                        // Marcar como descargado
+                        card.classList.add('descargado');
+                        this.librosDescargados[libroId] = true;
+                        
+                        // Deshabilitar y desmarcar el otro checkbox
+                        if (noEncontradoCheckbox) {
+                            noEncontradoCheckbox.checked = false;
+                            noEncontradoCheckbox.disabled = true;
+                        }
+                        
+                        // Limpiar marcador de no encontrado
+                        card.classList.remove('no-encontrado');
+                        delete this.librosNoEncontrados[libroId];
+                        
+                        this.mostrarNotificacion('Libro marcado como descargado', 'success');
+                    } else {
+                        // Desmarcar como descargado
+                        card.classList.remove('descargado');
+                        delete this.librosDescargados[libroId];
+                        
+                        // Habilitar el otro checkbox
+                        if (noEncontradoCheckbox) {
+                            noEncontradoCheckbox.disabled = false;
+                        }
+                        
+                        this.mostrarNotificacion('Marcador de descargado eliminado', 'info');
+                    }
+                } else if (tipo === 'no-encontrado') {
+                    if (checkbox.checked) {
+                        // Marcar como no encontrado
+                        card.classList.add('no-encontrado');
+                        this.librosNoEncontrados[libroId] = true;
+                        
+                        // Deshabilitar y desmarcar el otro checkbox
+                        if (descargadoCheckbox) {
+                            descargadoCheckbox.checked = false;
+                            descargadoCheckbox.disabled = true;
+                        }
+                        
+                        // Limpiar marcador de descargado
+                        card.classList.remove('descargado');
+                        delete this.librosDescargados[libroId];
+                        
+                        this.mostrarNotificacion('Libro marcado como no encontrado', 'warning');
+                    } else {
+                        // Desmarcar como no encontrado
+                        card.classList.remove('no-encontrado');
+                        delete this.librosNoEncontrados[libroId];
+                        
+                        // Habilitar el otro checkbox
+                        if (descargadoCheckbox) {
+                            descargadoCheckbox.disabled = false;
+                        }
+                        
+                        this.mostrarNotificacion('Marcador de no encontrado eliminado', 'info');
+                    }
+                }
+                
+                this.guardarDatos();
+                this.actualizarContadores();
+                this.actualizarEstadisticas();
+            }
+
+            aplicarMarcadoresGuardados() {
+                Object.keys(this.librosDescargados).forEach(libroId => {
+                    const checkbox = document.getElementById('check_descargado_' + libroId);
+                    const otroCheckbox = document.getElementById('check_noencontrado_' + libroId);
+                    if (checkbox) {
+                        checkbox.checked = true;
+                        checkbox.closest('.book-card').classList.add('descargado');
+                        if (otroCheckbox) otroCheckbox.disabled = true;
+                    }
+                });
+                
+                Object.keys(this.librosNoEncontrados).forEach(libroId => {
+                    const checkbox = document.getElementById('check_noencontrado_' + libroId);
+                    const otroCheckbox = document.getElementById('check_descargado_' + libroId);
+                    if (checkbox) {
+                        checkbox.checked = true;
+                        checkbox.closest('.book-card').classList.add('no-encontrado');
+                        if (otroCheckbox) otroCheckbox.disabled = true;
+                    }
+                });
+            }
+
+            actualizarContadores() {
+                const countDescargados = Object.keys(this.librosDescargados).length;
+                const countNoEncontrados = Object.keys(this.librosNoEncontrados).length;
+                
+                document.getElementById('contador-descargados').textContent = 
+                    `${countDescargados} descargado${countDescargados !== 1 ? 's' : ''}`;
+                document.getElementById('contador-no-encontrados').textContent = 
+                    `${countNoEncontrados} no encontrado${countNoEncontrados !== 1 ? 's' : ''}`;
+            }
+
+            filterBooks(filter) {
+                const cards = document.querySelectorAll('.book-card');
+                const buttons = document.querySelectorAll('.filter-btn');
+                
+                buttons.forEach(btn => {
+                    btn.classList.remove('active');
+                    if (btn.textContent.toLowerCase().includes(filter)) {
+                        btn.classList.add('active');
+                    }
+                });
+                
+                cards.forEach(card => {
+                    let mostrar = true;
+                    
+                    switch(filter) {
+                        case 'all':
+                            mostrar = true;
+                            break;
+                        case 'audio':
+                            mostrar = card.querySelector('.link-item.audio') !== null;
+                            break;
+                        case 'torrent':
+                            mostrar = card.querySelector('.link-item.torrent') !== null;
+                            break;
+                        case 'descarga':
+                            mostrar = card.querySelector('.link-item.directo') !== null;
+                            break;
+                        case 'descargados':
+                            mostrar = card.classList.contains('descargado');
+                            break;
+                        case 'no-encontrados':
+                            mostrar = card.classList.contains('no-encontrado');
+                            break;
+                    }
+                    
+                    card.style.display = mostrar ? 'block' : 'none';
+                    if (mostrar) {
+                        card.style.animation = 'fadeIn 0.3s ease';
+                    }
+                });
+                
+                // Mostrar mensaje si no hay resultados
+                const visibleCards = Array.from(cards).filter(card => card.style.display !== 'none');
+                if (visibleCards.length === 0 && this.libros.length > 0) {
+                    const grid = document.getElementById('booksGrid');
+                    const mensaje = document.createElement('div');
+                    mensaje.className = 'welcome-message';
+                    mensaje.innerHTML = `
+                        <h3><span>🔍</span> No se encontraron resultados</h3>
+                        <p>No hay libros que coincidan con el filtro "${filter}".</p>
+                        <button onclick="filterBooks('all')" style="
+                            margin-top: 20px;
+                            padding: 12px 24px;
+                            background: var(--primary);
+                            color: white;
+                            border: none;
+                            border-radius: 50px;
+                            cursor: pointer;
+                            font-weight: 500;
+                        ">Ver todos los libros</button>
+                    `;
+                    grid.innerHTML = '';
+                    grid.appendChild(mensaje);
+                }
+            }
+
+            actualizarEstadisticas() {
+                const totalLibros = this.libros.length;
+                const totalEnlaces = this.libros.reduce((sum, libro) => sum + libro.enlaces.length, 0);
+                const descargadosCount = Object.keys(this.librosDescargados).length;
+                const noEncontradosCount = Object.keys(this.librosNoEncontrados).length;
+
+                document.getElementById('totalLibros').textContent = totalLibros.toLocaleString();
+                document.getElementById('totalEnlaces').textContent = totalEnlaces.toLocaleString();
+                document.getElementById('descargadosCount').textContent = descargadosCount.toLocaleString();
+                document.getElementById('noEncontradosCount').textContent = noEncontradosCount.toLocaleString();
+            }
+
+            esEducativo(titulo) {
+                const palabrasEducativas = [
+                    'educación', 'educativo', 'educativa', 'enseñanza', 'pedagogía',
+                    'didáctica', 'curso', 'manual', 'guía', 'aprendizaje', 'texto',
+                    'escolar', 'académico', 'universidad', 'aprende', 'enseña',
+                    'pedagógico', 'didáctico', 'formación', 'instrucción'
+                ];
+                const tituloLower = titulo.toLowerCase();
+                return palabrasEducativas.some(palabra => tituloLower.includes(palabra));
+            }
+
+            exportarLista() {
+                if (this.libros.length === 0) {
+                    this.mostrarNotificacion('No hay libros para exportar', 'warning');
+                    return;
+                }
+
+                let contenido = '═══════════════════════════════════════════════════\n';
+                contenido += '               LISTA DE AUDIOLIBROS BUSCADOS\n';
+                contenido += '═══════════════════════════════════════════════════\n\n';
+                contenido += `Fecha de exportación: ${new Date().toLocaleDateString('es-ES', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                })}\n`;
+                contenido += `Total de libros: ${this.libros.length}\n`;
+                contenido += `Libros descargados: ${Object.keys(this.librosDescargados).length}\n`;
+                contenido += `Libros no encontrados: ${Object.keys(this.librosNoEncontrados).length}\n`;
+                contenido += '\n═══════════════════════════════════════════════════\n\n';
+
+                this.libros.forEach((libro, index) => {
+                    const esDescargado = this.librosDescargados[libro.id];
+                    const esNoEncontrado = this.librosNoEncontrados[libro.id];
+                    
+                    contenido += `[${index + 1}] ${esDescargado ? '[✓ DESCARGADO] ' : ''}${esNoEncontrado ? '[✗ NO ENCONTRADO] ' : ''}\n`;
+                    contenido += `TÍTULO: ${libro.titulo}\n`;
+                    contenido += `AUTOR: ${libro.autor}\n`;
+                    contenido += `FECHA: ${new Date(libro.fechaBusqueda).toLocaleDateString()}\n`;
+                    contenido += `ENLACES (${libro.enlaces.length}):\n\n`;
+                    
+                    // Agrupar enlaces por tipo
+                    const enlacesPorTipo = {};
+                    libro.enlaces.forEach(enlace => {
+                        if (!enlacesPorTipo[enlace.tipo]) {
+                            enlacesPorTipo[enlace.tipo] = [];
+                        }
+                        enlacesPorTipo[enlace.tipo].push(enlace);
+                    });
+                    
+                    Object.entries(enlacesPorTipo).forEach(([tipo, enlaces]) => {
+                        contenido += `  ${tipo} (${enlaces.length}):\n`;
+                        enlaces.forEach(enlace => {
+                            contenido += `    • ${enlace.plataforma}: ${enlace.url}\n`;
+                        });
+                        contenido += '\n';
+                    });
+                    
+                    contenido += '─'.repeat(55) + '\n\n';
+                });
+
+                const blob = new Blob([contenido], { type: 'text/plain;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                const fecha = new Date().toISOString().split('T')[0];
+                a.download = `lista_audiolibros_${fecha}.txt`;
+                a.click();
+                URL.revokeObjectURL(url);
+                
+                this.mostrarNotificacion('Lista exportada correctamente', 'success');
+            }
+        }
+
+        // Variables globales
+        let buscador;
+
+        // Funciones globales
+        function mostrarBusquedaManual() {
+            document.getElementById('busquedaManualPanel').classList.remove('hidden');
+            document.getElementById('subirCSVPanel').classList.add('hidden');
+            document.querySelectorAll('.method-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+
+        function mostrarSubirCSV() {
+            document.getElementById('busquedaManualPanel').classList.add('hidden');
+            document.getElementById('subirCSVPanel').classList.remove('hidden');
+            document.querySelectorAll('.method-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Scroll suave al panel
+            document.getElementById('subirCSVPanel').scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'start' 
+            });
+        }
+
+        function buscarLibroManual() {
+            const titulo = document.getElementById('tituloInput').value;
+            const autor = document.getElementById('autorInput').value;
+            buscador.buscarLibro(titulo, autor);
+        }
+
+        function busquedaRapida(tipo) {
+            const titulo = document.getElementById('tituloInput').value;
+            const autor = document.getElementById('autorInput').value;
+            if (!titulo.trim()) {
+                buscador.mostrarNotificacion('Por favor ingresa al menos el título del libro', 'warning');
+                document.getElementById('tituloInput').focus();
+                return;
+            }
+            buscador.buscarLibro(titulo, autor, tipo);
+        }
+
+        function procesarCSV() {
+            buscador.procesarTodoCSV();
+        }
+
+        function cancelarCSV() {
+            buscador.cancelarProcesamientoCSV();
+        }
+
+        function descargarTemplateCSV() {
+            buscador.descargarTemplateCSV();
+        }
+
+        function limpiarBusquedas() {
+            buscador.limpiarBusquedas();
+        }
+
+        function filterBooks(filter) {
+            buscador.filterBooks(filter);
+        }
+
+        function exportarLista() {
+            buscador.exportarLista();
+        }
+
+        function exportarDatosCompletos() {
+            buscador.exportarDatosCompletos();
+        }
+
+        function importarDatos() {
+            buscador.importarDatos();
+        }
+
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', function() {
+            buscador = new BuscadorAudiolibros();
+            
+            // Eventos de teclado para búsqueda
+            document.getElementById('tituloInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    buscarLibroManual();
+                }
+            });
+            
+            document.getElementById('autorInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    buscarLibroManual();
+                }
+            });
+            
+            // Auto-focus en el campo de título
+            document.getElementById('tituloInput').focus();
+            
+            // Mostrar ayuda de teclado
+            setTimeout(() => {
+                if (localStorage.getItem('mostrarAyuda') !== 'false') {
+                    buscador.mostrarNotificacion('💡 Presiona Enter para buscar rápidamente', 'info');
+                    localStorage.setItem('mostrarAyuda', 'false');
+                }
+            }, 2000);
+        });
+
+        // Mejorar rendimiento en dispositivos móviles
+        if ('ontouchstart' in window) {
+            document.documentElement.style.touchAction = 'manipulation';
+            document.documentElement.style.webkitTapHighlightColor = 'transparent';
+        }
+
+        // Prevenir zoom en inputs en iOS
+        document.addEventListener('touchstart', function(event) {
+            if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA') {
+                event.target.style.fontSize = '16px';
+            }
+        }, { passive: true });
+    </script>
+</body>
+</html>
