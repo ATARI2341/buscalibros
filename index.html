@@ -143,9 +143,9 @@
             text-align: center;
             font-size: 1.8em;
             display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
+                align-items: center;
+                justify-content: center;
+                gap: 10px;
         }
         
         /* Formulario de búsqueda */
@@ -1966,7 +1966,17 @@ Stephen King,El resplandor`;
                     return;
                 }
 
-                grid.innerHTML = this.libros.map(libro => this.crearTarjetaLibro(libro)).join('');
+                // Ordenar libros: primero los no descargados, luego los descargados
+                const librosOrdenados = [...this.libros].sort((a, b) => {
+                    const aDescargado = this.librosDescargados[a.id] || false;
+                    const bDescargado = this.librosDescargados[b.id] || false;
+                    
+                    if (aDescargado && !bDescargado) return 1; // a va después si está descargado
+                    if (!aDescargado && bDescargado) return -1; // a va antes si no está descargado
+                    return b.timestamp - a.timestamp; // Orden más reciente primero
+                });
+
+                grid.innerHTML = librosOrdenados.map(libro => this.crearTarjetaLibro(libro)).join('');
                 this.aplicarMarcadoresGuardados();
             }
 
@@ -2076,6 +2086,18 @@ Stephen King,El resplandor`;
                         delete this.librosNoEncontrados[libroId];
                         
                         this.mostrarNotificacion('Libro marcado como descargado', 'success');
+                        
+                        // Ordenar libros para que los descargados vayan al final
+                        this.ordenarLibros();
+                        
+                        // AGREGADO: Scroll automático al final después de reordenar
+                        setTimeout(() => {
+                            window.scrollTo({
+                                top: document.body.scrollHeight,
+                                behavior: 'smooth'
+                            });
+                        }, 350);
+                        
                     } else {
                         // Desmarcar como descargado
                         card.classList.remove('descargado');
@@ -2087,6 +2109,9 @@ Stephen King,El resplandor`;
                         }
                         
                         this.mostrarNotificacion('Marcador de descargado eliminado', 'info');
+                        
+                        // Ordenar libros para que vuelva a su posición original
+                        this.ordenarLibros();
                     }
                 } else if (tipo === 'no-encontrado') {
                     if (checkbox.checked) {
@@ -2122,6 +2147,20 @@ Stephen King,El resplandor`;
                 this.guardarDatos();
                 this.actualizarContadores();
                 this.actualizarEstadisticas();
+            }
+
+            ordenarLibros() {
+                // Ordenar libros: primero los no descargados, luego los descargados
+                this.libros.sort((a, b) => {
+                    const aDescargado = this.librosDescargados[a.id] || false;
+                    const bDescargado = this.librosDescargados[b.id] || false;
+                    
+                    if (aDescargado && !bDescargado) return 1; // a va después si está descargado
+                    if (!aDescargado && bDescargado) return -1; // a va antes si no está descargado
+                    return b.timestamp - a.timestamp; // Orden más reciente primero
+                });
+                
+                this.mostrarLibros();
             }
 
             aplicarMarcadoresGuardados() {
