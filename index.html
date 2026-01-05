@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
-    <title>🎧 Buscador de Audiolibros</title>
+    <title>🎧 Buscador de Audiolibros con Etiquetas</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎧</text></svg>">
     <style>
         :root {
@@ -16,6 +16,18 @@
             --light: #f8f9fa;
             --gray: #7f8c8d;
             --border: #e9ecef;
+            
+            /* Colores de etiquetas predeterminadas */
+            --tag-red: #e74c3c;
+            --tag-purple: #9b59b6;
+            --tag-green: #27ae60;
+            --tag-blue: #3498db;
+            --tag-orange: #f39c12;
+            --tag-teal: #1abc9c;
+            --tag-pink: #e84393;
+            --tag-gray: #95a5a6;
+            --tag-brown: #a1887f;
+            --tag-indigo: #3f51b5;
         }
         
         * {
@@ -143,9 +155,9 @@
             text-align: center;
             font-size: 1.8em;
             display: flex;
-                align-items: center;
-                justify-content: center;
-                gap: 10px;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
         }
         
         /* Formulario de búsqueda */
@@ -245,15 +257,33 @@
             background: white;
             padding: 25px;
             border-radius: 20px;
-            margin-bottom: 25px;
             box-shadow: 0 5px 20px rgba(0,0,0,0.1);
             flex-wrap: wrap;
             gap: 20px;
         }
         
-        .filter-buttons {
+        .filter-section {
             display: flex;
             gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .filter-group-label {
+            font-weight: 600;
+            color: var(--dark);
+            font-size: 0.85em;
+            padding-left: 5px;
+        }
+        
+        .filter-buttons {
+            display: flex;
+            gap: 8px;
             flex-wrap: wrap;
         }
         
@@ -267,6 +297,9 @@
             transition: all 0.3s ease;
             font-weight: 500;
             font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
         
         .filter-btn:hover {
@@ -287,6 +320,63 @@
         .filter-btn.no-encontrados.active {
             background: var(--danger);
             color: white;
+        }
+        
+        /* Botón para borrar filtros */
+        .clear-filters-btn {
+            padding: 10px 20px;
+            background: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .clear-filters-btn:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        /* Botones de filtro de etiquetas */
+        .tag-filter-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            position: relative;
+            min-width: 120px;
+            justify-content: center;
+        }
+        
+        .tag-filter-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .tag-filter-btn.active {
+            opacity: 0.9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .tag-filter-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 2px solid rgba(255,255,255,0.8);
         }
         
         .counter-section {
@@ -311,6 +401,11 @@
         .counter-noencontrados {
             background: rgba(231, 76, 60, 0.1);
             color: var(--danger);
+        }
+        
+        .counter-etiquetas {
+            background: rgba(155, 89, 182, 0.1);
+            color: var(--purple);
         }
         
         .action-btn {
@@ -344,6 +439,221 @@
         
         .clear-btn { background: var(--danger); }
         .clear-btn:hover { background: #c0392b; }
+        
+        /* Gestor de etiqueta personalizadas */
+        .tag-manager-btn {
+            background: var(--warning);
+            color: white;
+        }
+        
+        .tag-manager-btn:hover {
+            background: #e67e22;
+        }
+        
+        .tag-manager-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .tag-manager-modal.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .tag-manager-content {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            transform: translateY(-20px);
+            transition: transform 0.3s ease;
+        }
+        
+        .tag-manager-modal.show .tag-manager-content {
+            transform: translateY(0);
+        }
+        
+        .tag-manager-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--light);
+        }
+        
+        .tag-manager-header h3 {
+            color: var(--dark);
+            font-size: 1.5em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 1.5em;
+            cursor: pointer;
+            color: var(--gray);
+            padding: 5px;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .close-modal:hover {
+            background: var(--light);
+            color: var(--danger);
+        }
+        
+        .custom-tags-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        
+        .custom-tag-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px;
+            background: var(--light);
+            border-radius: 12px;
+            border-left: 5px solid;
+        }
+        
+        .custom-tag-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .custom-tag-color {
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .custom-tag-name {
+            font-weight: 600;
+            color: var(--dark);
+        }
+        
+        .custom-tag-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .tag-action-btn {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .tag-edit-btn {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .tag-delete-btn {
+            background: var(--danger);
+            color: white;
+        }
+        
+        .tag-action-btn:hover {
+            opacity: 0.9;
+        }
+        
+        .create-tag-form {
+            background: var(--light);
+            padding: 20px;
+            border-radius: 12px;
+            margin-top: 20px;
+        }
+        
+        .create-tag-form h4 {
+            margin-bottom: 15px;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 100px;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .form-row input {
+            padding: 12px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        
+        .form-row input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        
+        .color-preview {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            cursor: pointer;
+            border: 2px solid var(--border);
+        }
+        
+        .color-input {
+            display: none;
+        }
+        
+        .create-tag-btn {
+            width: 100%;
+            padding: 12px;
+            background: var(--success);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .create-tag-btn:hover {
+            background: #219653;
+        }
         
         /* Estadísticas */
         .stats {
@@ -434,7 +744,7 @@
             line-height: 1.8;
         }
         
-        /* Tarjetas de libros */
+        /* Tarjetas de libros - ESTILOS CORREGIDOS */
         .book-card {
             background: white;
             border-radius: 20px;
@@ -444,6 +754,8 @@
             position: relative;
             border: 3px solid transparent;
             animation: fadeIn 0.5s ease;
+            overflow: hidden;
+            min-height: 300px;
         }
         
         @keyframes fadeIn {
@@ -485,13 +797,208 @@
             color: var(--danger);
         }
         
-        /* Checkboxes */
+        /* ETIQUETAS DE COLOR - ESTILOS CORREGIDOS */
+        .tag-indicator {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            border: 3px solid white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 10;
+        }
+        
+        .tag-indicator:hover {
+            transform: scale(1.2);
+        }
+        
+        .tag-indicator.untagged {
+            background: repeating-linear-gradient(
+                45deg,
+                #ccc,
+                #ccc 2px,
+                #eee 2px,
+                #eee 4px
+            );
+        }
+        
+        .tag-indicator.untagged:hover {
+            background: var(--light);
+        }
+        
+        /* Menú desplegable de etiquetas */
+        .tag-menu {
+            position: absolute;
+            top: 45px;
+            right: 15px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            padding: 15px;
+            z-index: 100;
+            min-width: 280px;
+            display: none;
+            animation: slideDown 0.2s ease;
+            border: 2px solid var(--border);
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .tag-menu.show {
+            display: block;
+        }
+        
+        .tag-menu h4 {
+            margin-bottom: 15px;
+            color: var(--dark);
+            text-align: center;
+            font-size: 16px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--light);
+        }
+        
+        .tag-options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .tag-option {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: none;
+            background: white;
+            text-align: left;
+            font-size: 14px;
+        }
+        
+        .tag-option:hover {
+            background: var(--light);
+            transform: translateX(5px);
+        }
+        
+        .tag-option.active {
+            background: var(--light);
+            font-weight: 600;
+        }
+        
+        .tag-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            border: 2px solid rgba(255,255,255,0.8);
+        }
+        
+        .tag-section-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--gray);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 15px;
+            margin-bottom: 8px;
+            padding-left: 5px;
+        }
+        
+        /* Contenido de tarjeta - ESTILOS CORREGIDOS */
+        .book-header {
+            border-bottom: 2px solid var(--light);
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+            padding-right: 60px;
+        }
+        
+        .book-title {
+            font-size: 1.5em;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 8px;
+            line-height: 1.4;
+        }
+        
+        .book-author {
+            color: var(--primary);
+            font-style: italic;
+            font-weight: 500;
+            font-size: 1.1em;
+        }
+        
+        .fecha-busqueda {
+            color: var(--gray);
+            font-size: 0.85em;
+            display: block;
+            margin-top: 10px;
+        }
+        
+        .book-meta {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .badge {
+            padding: 8px 16px;
+            border-radius: 50px;
+            font-size: 0.85em;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .badge-audio {
+            background: rgba(39, 174, 96, 0.1);
+            color: var(--success);
+        }
+        
+        .badge-educativo {
+            background: rgba(243, 156, 18, 0.1);
+            color: var(--warning);
+        }
+        
+        .badge-torrent {
+            background: rgba(52, 152, 219, 0.1);
+            color: var(--primary);
+        }
+        
+        .badge-directo {
+            background: rgba(155, 89, 182, 0.1);
+            color: var(--purple);
+        }
+        
+        .badge-no-encontrado {
+            background: rgba(231, 76, 60, 0.1);
+            color: var(--danger);
+        }
+        
+        /* Checkboxes - POSICIÓN CORREGIDA */
         .checkbox-container {
             position: absolute;
             top: 80px;
             right: 15px;
             width: 40%;
-
             display: grid;
             gap: 2px;
             background: white;
@@ -561,78 +1068,6 @@
             opacity: 0.5;
             cursor: not-allowed;
             background: var(--light);
-        }
-        
-        /* Contenido de tarjeta */
-        .book-header {
-            border-bottom: 2px solid var(--light);
-            padding-bottom: 20px;
-            margin-bottom: 20px;
-            padding-right: 100px;
-        }
-        
-        .book-title {
-            font-size: 1.5em;
-            font-weight: 700;
-            color: var(--dark);
-            margin-bottom: 8px;
-            line-height: 1.4;
-        }
-        
-        .book-author {
-            color: var(--primary);
-            font-style: italic;
-            font-weight: 500;
-            font-size: 1.1em;
-        }
-        
-        .fecha-busqueda {
-            color: var(--gray);
-            font-size: 0.85em;
-            display: block;
-            margin-top: 10px;
-        }
-        
-        .book-meta {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-        }
-        
-        .badge {
-            padding: 8px 16px;
-            border-radius: 50px;
-            font-size: 0.85em;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-        
-        .badge-audio {
-            background: rgba(39, 174, 96, 0.1);
-            color: var(--success);
-        }
-        
-        .badge-educativo {
-            background: rgba(243, 156, 18, 0.1);
-            color: var(--warning);
-        }
-        
-        .badge-torrent {
-            background: rgba(52, 152, 219, 0.1);
-            color: var(--primary);
-        }
-        
-        .badge-directo {
-            background: rgba(155, 89, 182, 0.1);
-            color: var(--purple);
-        }
-        
-        .badge-no-encontrado {
-            background: rgba(231, 76, 60, 0.1);
-            color: var(--danger);
         }
         
         /* Enlaces */
@@ -735,133 +1170,6 @@
             flex-shrink: 0;
         }
         
-        /* Panel CSV */
-        .csv-upload-section {
-            text-align: center;
-        }
-        
-        .upload-area {
-            border: 3px dashed var(--primary);
-            border-radius: 20px;
-            padding: 50px 30px;
-            margin: 30px 0;
-            background: var(--light);
-            cursor: pointer;
-            transition: all 0.3s ease;
-            position: relative;
-        }
-        
-        .upload-area:hover {
-            background: #e8f4f8;
-            border-color: #2980b9;
-        }
-        
-        .upload-area.dragover {
-            background: #d4edda;
-            border-color: var(--success);
-            transform: scale(1.02);
-        }
-        
-        .upload-icon {
-            font-size: 4em;
-            margin-bottom: 20px;
-            color: var(--primary);
-        }
-        
-        .upload-hint {
-            color: var(--gray);
-            font-size: 0.95em;
-            margin-top: 15px;
-            line-height: 1.6;
-        }
-        
-        .file-input {
-            display: none;
-        }
-        
-        /* Barra de progreso */
-        .progress-container {
-            background: white;
-            padding: 30px;
-            border-radius: 20px;
-            box-shadow: 0 8px 30px rgba(0,0,0,0.1);
-            margin-bottom: 25px;
-        }
-        
-        .progress-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-            gap: 15px;
-        }
-        
-        .progress-bar {
-            width: 100%;
-            height: 24px;
-            background: var(--light);
-            border-radius: 12px;
-            overflow: hidden;
-            position: relative;
-        }
-        
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, var(--primary), var(--success));
-            border-radius: 12px;
-            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-            width: 0%;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .progress-fill::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(
-                90deg,
-                transparent,
-                rgba(255, 255, 255, 0.4),
-                transparent
-            );
-            animation: shimmer 2s infinite;
-        }
-        
-        @keyframes shimmer {
-            0% { transform: translateX(-100%); }
-            100% { transform: translateX(100%); }
-        }
-        
-        .progress-stats {
-            display: flex;
-            justify-content: space-around;
-            margin-top: 20px;
-            gap: 20px;
-            flex-wrap: wrap;
-        }
-        
-        .progress-stat {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 5px;
-        }
-        
-        .progress-stat .number {
-            font-size: 1.5em;
-            font-weight: 700;
-        }
-        
-        .progress-stat .label {
-            font-size: 0.85em;
-            color: var(--gray);
-        }
-        
         /* Footer */
         .footer {
             text-align: center;
@@ -905,6 +1213,10 @@
                 padding: 20px;
             }
             
+            .filter-section {
+                flex-direction: column;
+            }
+            
             .filter-buttons {
                 justify-content: center;
             }
@@ -921,14 +1233,27 @@
                 padding: 25px 20px;
             }
             
-            .checkbox-container {
-                top: 20px;
-                right: 20px;
-                padding: 8px;
+            .book-header {
+                padding-right: 60px;
             }
             
-            .book-header {
-                padding-right: 80px;
+            .tag-menu {
+                min-width: 250px;
+                right: 10px;
+            }
+            
+            .checkbox-container {
+                top: 80px;
+                right: 15px;
+                width: 45%;
+            }
+            
+            .custom-tags-list {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-row {
+                grid-template-columns: 1fr;
             }
         }
         
@@ -954,59 +1279,28 @@
                 font-size: 2em;
             }
             
-            .link-item {
-                padding: 12px 15px;
+            .book-header {
+                padding-right: 50px;
             }
-        }
-        
-        /* Mejoras de accesibilidad */
-        @media (prefers-reduced-motion: reduce) {
-            * {
-                animation-duration: 0.01ms !important;
-                animation-iteration-count: 1 !important;
-                transition-duration: 0.01ms !important;
+            
+            .checkbox-container {
+                top: 70px;
+                width: 50%;
             }
-        }
-        
-        /* Focus styles */
-        button:focus,
-        input:focus,
-        .link-item:focus {
-            outline: 3px solid var(--primary);
-            outline-offset: 3px;
-        }
-        
-        /* Loading state */
-        .loading {
-            position: relative;
-            pointer-events: none;
-            opacity: 0.7;
-        }
-        
-        .loading::after {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 24px;
-            height: 24px;
-            border: 3px solid var(--light);
-            border-top-color: var(--primary);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            transform: translate(-50%, -50%);
-        }
-        
-        @keyframes spin {
-            to { transform: translate(-50%, -50%) rotate(360deg); }
+            
+            .tag-filter-btn {
+                min-width: 100px;
+                font-size: 12px;
+                padding: 8px 12px;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>🎧 Buscador de Audiolibros</h1>
-            <p>Encuentra audiolibros en +30 plataformas • Guardado automático • Compatible con todos los dispositivos</p>
+            <h1>🎧 Buscador de Audiolibros con Etiquetas</h1>
+            <p>Organiza tus audiolibros con etiquetas de color • Guardado automático • Sistema de prioridades</p>
         </div>
 
         <!-- Selector de Método de Búsqueda -->
@@ -1014,10 +1308,6 @@
             <button class="method-btn active" onclick="mostrarBusquedaManual()">
                 <span>🔍</span>
                 <span>Búsqueda Manual</span>
-            </button>
-            <button class="method-btn" onclick="mostrarSubirCSV()">
-                <span>📁</span>
-                <span>Subir CSV</span>
             </button>
         </div>
 
@@ -1055,80 +1345,42 @@
             </div>
         </div>
 
-        <!-- Panel de Subir CSV -->
-        <div class="search-panel hidden" id="subirCSVPanel">
-            <h2><span>📁</span> Subir Archivo CSV</h2>
-            <div class="csv-upload-section">
-                <div class="upload-area" id="uploadArea">
-                    <div class="upload-icon">📁</div>
-                    <p style="font-size: 1.2em; font-weight: 600; color: var(--dark); margin-bottom: 10px;">
-                        Arrastra tu archivo CSV aquí
-                    </p>
-                    <p>o haz clic para seleccionar</p>
-                    <p class="upload-hint">
-                        El archivo CSV debe tener columnas: <strong>autor</strong> y <strong>titulo</strong><br>
-                        Formato: autor,titulo (separados por coma)
-                    </p>
-                    <input type="file" id="csvFileInput" accept=".csv" class="file-input">
-                </div>
-                
-                <div class="csv-preview hidden" id="csvPreview">
-                    <h3>📋 Vista Previa del CSV</h3>
-                    <div class="preview-table-container">
-                        <table id="previewTable">
-                            <thead>
-                                <tr>
-                                    <th>Autor</th>
-                                    <th>Título</th>
-                                </tr>
-                            </thead>
-                            <tbody id="previewTableBody"></tbody>
-                        </table>
-                    </div>
-                    <div class="csv-actions">
-                        <button onclick="procesarCSV()" class="process-btn" style="padding: 15px 30px; font-size: 16px;">
-                            <span>🚀</span>
-                            <span>Procesar Todos los Libros</span>
-                        </button>
-                        <button onclick="cancelarCSV()" class="cancel-btn" style="padding: 15px 30px; font-size: 16px;">
-                            <span>❌</span>
-                            <span>Cancelar</span>
-                        </button>
-                    </div>
-                </div>
-
-                <div class="csv-template">
-                    <h4>📋 Ejemplo de CSV:</h4>
-                    <div class="template-example">
-                        <code style="display: block; padding: 15px; background: var(--light); border-radius: 8px; text-align: left;">
-                            autor,titulo<br>
-                            Gabriel Garcia Marquez,Cien años de soledad<br>
-                            Jane Austen,Orgullo y prejuicio<br>
-                            George Orwell,1984<br>
-                            J.K. Rowling,Harry Potter y la piedra filosofal
-                        </code>
-                    </div>
-                    <button onclick="descargarTemplateCSV()" class="template-btn" style="margin-top: 15px; padding: 12px 24px;">
-                        <span>📥</span>
-                        <span>Descargar Plantilla CSV</span>
-                    </button>
-                </div>
-            </div>
-        </div>
-
         <!-- Controles -->
         <div class="controls">
-            <div class="filter-buttons">
-                <button class="filter-btn active" onclick="filterBooks('all')">Todos</button>
-                <button class="filter-btn" onclick="filterBooks('audio')">Audiolibros</button>
-                <button class="filter-btn" onclick="filterBooks('torrent')">Torrents</button>
-                <button class="filter-btn" onclick="filterBooks('descarga')">Descargas</button>
-                <button class="filter-btn" onclick="filterBooks('descargados')">Descargados</button>
-                <button class="filter-btn no-encontrados" onclick="filterBooks('no-encontrados')">No Encontrados</button>
+            <div class="filter-section">
+                <div class="filter-group">
+                    <div class="filter-group-label">Filtros de Estado</div>
+                    <div class="filter-buttons">
+                        <button class="filter-btn active" onclick="filterBooks('all')">Todos</button>
+                        <button class="filter-btn" onclick="filterBooks('audio')">Audiolibros</button>
+                        <button class="filter-btn" onclick="filterBooks('torrent')">Torrents</button>
+                        <button class="filter-btn" onclick="filterBooks('descarga')">Descargas</button>
+                        <button class="filter-btn" onclick="filterBooks('descargados')">Descargados</button>
+                        <button class="filter-btn no-encontrados" onclick="filterBooks('no-encontrados')">No Encontrados</button>
+                        <!-- Botón para borrar filtros -->
+                        <button class="clear-filters-btn" onclick="borrarFiltros()" title="Borrar todos los filtros">
+                            <span>🗑️</span>
+                            <span>Borrar Filtros</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="filter-group">
+                    <div class="filter-group-label">Filtros por Etiquetas</div>
+                    <div class="filter-buttons" id="tagFiltersContainer">
+                        <!-- Los botones de filtro por etiquetas se generarán aquí -->
+                        <button class="filter-btn" onclick="filterByTag('sin-etiqueta')">
+                            <span>🏷️</span>
+                            <span>Sin Etiqueta</span>
+                        </button>
+                    </div>
+                </div>
             </div>
+            
             <div class="counter-section">
                 <span class="counter-badge counter-descargados" id="contador-descargados">0 descargados</span>
                 <span class="counter-badge counter-noencontrados" id="contador-no-encontrados">0 no encontrados</span>
+                <span class="counter-badge counter-etiquetas" id="contador-etiquetas">0 etiquetados</span>
                 <button onclick="exportarLista()" class="action-btn export-btn">
                     <span>💾</span>
                     <span>Exportar Lista</span>
@@ -1145,31 +1397,10 @@
                     <span>🗑️</span>
                     <span>Limpiar Todo</span>
                 </button>
-            </div>
-        </div>
-
-        <!-- Barra de Progreso para CSV -->
-        <div class="progress-container hidden" id="progressContainer">
-            <div class="progress-header">
-                <h3>📊 Procesando Archivo CSV</h3>
-                <span id="progressText">0/0 libros procesados</span>
-            </div>
-            <div class="progress-bar">
-                <div class="progress-fill" id="progressFill"></div>
-            </div>
-            <div class="progress-stats">
-                <div class="progress-stat">
-                    <span class="number" id="processedCount">0</span>
-                    <span class="label">Procesados</span>
-                </div>
-                <div class="progress-stat">
-                    <span class="number" id="successCount">0</span>
-                    <span class="label">Exitosos</span>
-                </div>
-                <div class="progress-stat">
-                    <span class="number" id="errorCount">0</span>
-                    <span class="label">Errores</span>
-                </div>
+                <button class="action-btn tag-manager-btn" onclick="mostrarGestorEtiquetas()">
+                    <span>🏷️</span>
+                    <span>Gestionar Etiquetas</span>
+                </button>
             </div>
         </div>
 
@@ -1191,259 +1422,608 @@
                 <div class="stat-number" id="noEncontradosCount">0</div>
                 <div class="stat-label">No Encontrados</div>
             </div>
+            <div class="stat-card">
+                <div class="stat-number" id="etiquetadosCount">0</div>
+                <div class="stat-label">Con Etiqueta</div>
+            </div>
         </div>
 
         <!-- Grid de Resultados -->
         <div class="books-grid" id="booksGrid">
             <div class="welcome-message">
-                <h3><span>👋</span> ¡Bienvenido al Buscador de Audiolibros!</h3>
-                <p>Usa el formulario de arriba para buscar libros individualmente o sube un archivo CSV con tu lista completa de libros.</p>
-                <p><strong>Ejemplo:</strong> Intenta buscar "Cien años de soledad" de "Gabriel García Márquez"</p>
-                <p style="margin-top: 20px; padding: 15px; background: rgba(52, 152, 219, 0.1); border-radius: 12px; color: var(--dark);">
-                    <strong>💡 Consejo:</strong> Marca libros como "No Encontrado" si no los encuentras en ninguna plataforma. 
-                    Los datos se guardan automáticamente en tu navegador.
-                </p>
+                <h3><span>👋</span> ¡Bienvenido al Buscador de Audiolibros con Etiquetas!</h3>
+                <p>Usa el formulario de arriba para buscar libros individualmente o sube un archivo CSV con tu lista completa.</p>
+                <p><strong>Nuevas funcionalidades:</strong></p>
+                <div style="margin-top: 20px; padding: 20px; background: rgba(52, 152, 219, 0.1); border-radius: 12px;">
+                    <p style="color: var(--dark); margin-bottom: 10px;"><strong>🎨 Sistema de etiquetas personalizadas:</strong></p>
+                    <ul style="text-align: left; max-width: 600px; margin: 0 auto; color: var(--gray);">
+                        <li>🏷️ <strong>Crea etiquetas personalizadas</strong> con cualquier color y nombre</li>
+                        <li>🔍 <strong>Filtra por etiquetas</strong> usando los botones de filtro en la sección de controles</li>
+                        <li>🗑️ <strong>Borra filtros</strong> con el botón "Borrar Filtros"</li>
+                        <li>📤 <strong>Exporta e importa</strong> etiquetas personalizadas con los backups</li>
+                        <li>🔧 <strong>Gestiona etiquetas</strong> desde el botón "Gestionar Etiquetas"</li>
+                        <li>⬇️ <strong>Los libros "No Encontrados"</strong> aparecen al final de la lista</li>
+                    </ul>
+                </div>
             </div>
         </div>
 
         <div class="footer">
-            <p>✨ Buscador Fácil - Encuentra audiolibros en más de 30 plataformas</p>
-            <p>📱 Compatible con móvil • 💾 Guardado automático • 🔍 Búsqueda avanzada</p>
+            <p>✨ Filtra por etiquetas • Crea etiquetas personalizadas • Exporta e importa datos</p>
+            <p>🎨 Sistema completo de gestión de etiquetas • 💾 Guardado automático</p>
+        </div>
+    </div>
+
+    <!-- Modal para Gestión de Etiquetas -->
+    <div class="tag-manager-modal" id="tagManagerModal">
+        <div class="tag-manager-content">
+            <div class="tag-manager-header">
+                <h3><span>🏷️</span> Gestor de Etiquetas Personalizadas</h3>
+                <button class="close-modal" onclick="ocultarGestorEtiquetas()">×</button>
+            </div>
+            
+            <div class="custom-tags-list" id="customTagsList">
+                <!-- Las etiquetas personalizadas se cargarán aquí -->
+            </div>
+            
+            <div class="create-tag-form">
+                <h4><span>➕</span> Crear Nueva Etiqueta Personalizada</h4>
+                <div class="form-row">
+                    <input type="text" id="newTagName" placeholder="Nombre de la etiqueta (ej: Favoritos, Para leer, etc.)" maxlength="30">
+                    <div class="color-preview" id="colorPreview" onclick="document.getElementById('colorPicker').click()">
+                        <input type="color" id="colorPicker" class="color-input" value="#3498db">
+                    </div>
+                </div>
+                <button onclick="crearNuevaEtiqueta()" class="create-tag-btn">
+                    <span>➕</span>
+                    <span>Crear Etiqueta Personalizada</span>
+                </button>
+            </div>
         </div>
     </div>
 
 <script>
-    // Sistema completo de búsqueda de audiolibros
+    // Sistema completo de búsqueda de audiolibros con etiquetas personalizadas
     class BuscadorAudiolibros {
         constructor() {
-            // Cargar datos con verificación de tipo
+            // Cargar datos
             this.libros = JSON.parse(localStorage.getItem('librosGuardados')) || [];
             
-            // Asegurar que librosDescargados sea un objeto
-            const descargados = JSON.parse(localStorage.getItem('librosDescargados'));
-            this.librosDescargados = (descargados && typeof descargados === 'object' && !Array.isArray(descargados)) 
-                ? descargados 
-                : {};
+            // Cargar marcadores
+            let descargados = JSON.parse(localStorage.getItem('librosDescargados'));
+            let noEncontrados = JSON.parse(localStorage.getItem('librosNoEncontrados'));
             
-            // Asegurar que librosNoEncontrados sea un objeto (no un array)
-            const noEncontrados = JSON.parse(localStorage.getItem('librosNoEncontrados'));
-            this.librosNoEncontrados = (noEncontrados && typeof noEncontrados === 'object' && !Array.isArray(noEncontrados)) 
-                ? noEncontrados 
-                : {};
+            this.librosDescargados = (descargados && typeof descargados === 'object') ? descargados : {};
+            this.librosNoEncontrados = (noEncontrados && typeof noEncontrados === 'object') ? noEncontrados : {};
             
-            this.csvData = [];
+            // Cargar etiquetas personalizadas y asignaciones
+            this.etiquetasPersonalizadas = JSON.parse(localStorage.getItem('etiquetasPersonalizadas')) || [];
+            this.librosEtiquetas = JSON.parse(localStorage.getItem('librosEtiquetas')) || {};
             
-            // Corregir datos existentes si es necesario
-            this.corregirDatosExistentes();
+            // Etiquetas predeterminadas
+            this.etiquetasPredeterminadas = [
+                { id: 'red', nombre: 'Importante', color: '#e74c3c', tipo: 'predeterminada' },
+                { id: 'purple', nombre: 'Normal', color: '#9b59b6', tipo: 'predeterminada' },
+                { id: 'green', nombre: 'No Prioritario', color: '#27ae60', tipo: 'predeterminada' },
+                { id: 'blue', nombre: 'Pendiente', color: '#3498db', tipo: 'predeterminada' },
+                { id: 'orange', nombre: 'Urgente', color: '#f39c12', tipo: 'predeterminada' }
+            ];
+            
+            // Variable para filtro activo
+            this.filtroActivo = 'all';
+            this.filtroEtiquetaActivo = null;
             
             this.init();
-        }
-
-        // Método para corregir datos existentes
-        corregirDatosExistentes() {
-            try {
-                // Verificar localStorage directamente
-                const datosRaw = localStorage.getItem('librosNoEncontrados');
-                if (datosRaw) {
-                    const datos = JSON.parse(datosRaw);
-                    if (Array.isArray(datos)) {
-                        console.log('Corrigiendo datos corruptos en localStorage...');
-                        const corregidos = {};
-                        datos.forEach(item => {
-                            if (typeof item === 'string') {
-                                corregidos[item] = {
-                                    fecha: new Date().toISOString(),
-                                    razon: 'Corregido automáticamente'
-                                };
-                            }
-                        });
-                        localStorage.setItem('librosNoEncontrados', JSON.stringify(corregidos));
-                        console.log('Datos corregidos:', corregidos);
-                        
-                        // Actualizar la propiedad
-                        this.librosNoEncontrados = corregidos;
-                    }
-                }
-            } catch (e) {
-                console.error('Error corrigiendo datos:', e);
-            }
         }
 
         init() {
             console.log('Datos cargados:', {
                 libros: this.libros.length,
                 descargados: Object.keys(this.librosDescargados).length,
-                noEncontrados: Object.keys(this.librosNoEncontrados).length
+                noEncontrados: Object.keys(this.librosNoEncontrados).length,
+                etiquetasPersonalizadas: this.etiquetasPersonalizadas.length,
+                librosEtiquetados: Object.keys(this.librosEtiquetas).length
             });
-            
-            // Limpiar datos corruptos primero
-            this.limpiarDatosCorruptos();
-            
-            // Limpiar IDs huérfanos
-            this.limpiarIdsHuerfanos();
             
             this.actualizarContadores();
-            this.configurarDragAndDrop();
             this.cargarLibrosGuardados();
             this.actualizarEstadisticas();
+            this.configurarCierreMenus();
+            this.configurarGestorEtiquetas();
+            this.actualizarFiltrosEtiquetas();
             
-            // Cargar datos de ejemplo si está vacío
-            if (this.libros.length === 0 && localStorage.getItem('datosEjemplo') !== 'cargados') {
-                setTimeout(() => this.cargarDatosEjemplo(), 1000);
+            // Mostrar libros existentes
+            if (this.libros.length > 0) {
+                this.mostrarLibros();
             }
         }
 
-        limpiarDatosCorruptos() {
-            let cambios = false;
-            
-            // Verificar y corregir librosDescargados
-            if (Array.isArray(this.librosDescargados)) {
-                console.warn('librosDescargados es un array, convirtiendo a objeto');
-                const temp = {};
-                this.librosDescargados.forEach(id => {
-                    if (typeof id === 'string') {
-                        temp[id] = true;
-                    }
-                });
-                this.librosDescargados = temp;
-                cambios = true;
-            }
-            
-            // Verificar y corregir librosNoEncontrados
-            if (Array.isArray(this.librosNoEncontrados)) {
-                console.warn('librosNoEncontrados es un array, convirtiendo a objeto');
-                const temp = {};
-                this.librosNoEncontrados.forEach(item => {
-                    if (typeof item === 'string') {
-                        // Si es un string (ID), convertirlo a objeto con estructura
-                        temp[item] = {
-                            fecha: new Date().toISOString(),
-                            razon: 'Corregido automáticamente'
-                        };
-                    } else if (item && item.id) {
-                        // Si es un objeto con propiedad id
-                        temp[item.id] = {
-                            fecha: new Date().toISOString(),
-                            razon: item.razon || 'Corregido automáticamente'
-                        };
-                    }
-                });
-                this.librosNoEncontrados = temp;
-                cambios = true;
-            }
-            
-            if (cambios) {
-                this.guardarDatos();
-                console.log('Datos corruptos limpiados');
-            }
+        configurarCierreMenus() {
+            document.addEventListener('click', (event) => {
+                if (!event.target.closest('.tag-indicator') && !event.target.closest('.tag-menu')) {
+                    this.cerrarTodosLosMenus();
+                }
+            });
+        }
+        
+        cerrarTodosLosMenus() {
+            document.querySelectorAll('.tag-menu.show').forEach(menu => {
+                menu.classList.remove('show');
+            });
         }
 
-limpiarIdsHuerfanos() {
-    // Primero asegurarse de que sean objetos
-    if (Array.isArray(this.librosDescargados) || Array.isArray(this.librosNoEncontrados)) {
-        this.limpiarDatosCorruptos();
-        return;
-    }
-    
-    const todosIds = this.libros.map(l => l.id);
-    let cambios = false;
-    
-    // Limpiar librosDescargados - verificar que no sean IDs de checkboxes
-    Object.keys(this.librosDescargados).forEach(id => {
-        // Verificar si es un ID de checkbox
-        if (id.includes('check_')) {
-            console.warn(`Eliminando ID de checkbox erroneo de librosDescargados: ${id}`);
-            delete this.librosDescargados[id];
-            cambios = true;
-        }
-        // Verificar si es huérfano
-        else if (!todosIds.includes(id)) {
-            delete this.librosDescargados[id];
-            console.log(`Eliminado ID huérfano de librosDescargados: ${id}`);
-            cambios = true;
-        }
-    });
-    
-    // Limpiar librosNoEncontrados - verificar que no sean IDs de checkboxes
-    Object.keys(this.librosNoEncontrados).forEach(id => {
-        // Verificar si es un ID de checkbox
-        if (id.includes('check_')) {
-            console.warn(`Eliminando ID de checkbox erroneo de librosNoEncontrados: ${id}`);
-            delete this.librosNoEncontrados[id];
-            cambios = true;
-        }
-        // Verificar si es huérfano
-        else if (!todosIds.includes(id)) {
-            delete this.librosNoEncontrados[id];
-            console.log(`Eliminado ID huérfano de librosNoEncontrados: ${id}`);
-            cambios = true;
-        }
-    });
-    
-    if (cambios) {
-        console.log('IDs huérfanos limpiados');
-        this.guardarDatos();
-    }
-}
-
-        verificarEstadoLibros() {
-            console.log('=== VERIFICACIÓN DE ESTADO ===');
-            console.log('Libros en array:', this.libros.length);
-            console.log('IDs de libros:', this.libros.map(l => l.id));
+        configurarGestorEtiquetas() {
+            const colorPicker = document.getElementById('colorPicker');
+            const colorPreview = document.getElementById('colorPreview');
             
-            // Verificar tipo de datos
-            console.log('Tipo de librosDescargados:', typeof this.librosDescargados, Array.isArray(this.librosDescargados) ? 'ES ARRAY!' : 'Es objeto');
-            console.log('Tipo de librosNoEncontrados:', typeof this.librosNoEncontrados, Array.isArray(this.librosNoEncontrados) ? 'ES ARRAY!' : 'Es objeto');
-            
-            // Mostrar claves correctamente
-            console.log('Libros descargados (claves):', Object.keys(this.librosDescargados));
-            console.log('Libros no encontrados (claves):', Object.keys(this.librosNoEncontrados));
-            
-            // Verificar consistencia
-            const librosConDescargado = this.libros.filter(l => this.librosDescargados[l.id]);
-            const librosConNoEncontrado = this.libros.filter(l => this.librosNoEncontrados[l.id]);
-            
-            console.log('Libros con marcador descargado:', librosConDescargado.length);
-            console.log('Libros con marcador no encontrado:', librosConNoEncontrado.length);
-            
-            // Verificar IDs huérfanos
-            const todosIds = this.libros.map(l => l.id);
-            const descargadosHuérfanos = Object.keys(this.librosDescargados).filter(id => !todosIds.includes(id));
-            const noEncontradosHuérfanos = Object.keys(this.librosNoEncontrados).filter(id => !todosIds.includes(id));
-            
-            if (descargadosHuérfanos.length > 0) {
-                console.warn('IDs huérfanos en librosDescargados:', descargadosHuérfanos);
-            }
-            if (noEncontradosHuérfanos.length > 0) {
-                console.warn('IDs huérfanos en librosNoEncontrados:', noEncontradosHuérfanos);
-            }
-            
-            // Mostrar detalles de libros no encontrados
-            console.log('Detalles libros no encontrados:');
-            Object.entries(this.librosNoEncontrados).forEach(([id, datos]) => {
-                console.log(`  ID: ${id}`, datos);
+            colorPicker.addEventListener('input', (e) => {
+                colorPreview.style.backgroundColor = e.target.value;
             });
             
-            console.log('=== FIN VERIFICACIÓN ===');
+            colorPreview.style.backgroundColor = colorPicker.value;
         }
 
-        cargarDatosEjemplo() {
-            const ejemplos = [
-                { titulo: "Cien años de soledad", autor: "Gabriel García Márquez" },
-                { titulo: "1984", autor: "George Orwell" },
-                { titulo: "Orgullo y prejuicio", autor: "Jane Austen" }
+        guardarDatos() {
+            try {
+                localStorage.setItem('librosGuardados', JSON.stringify(this.libros));
+                localStorage.setItem('librosDescargados', JSON.stringify(this.librosDescargados));
+                localStorage.setItem('librosNoEncontrados', JSON.stringify(this.librosNoEncontrados));
+                localStorage.setItem('etiquetasPersonalizadas', JSON.stringify(this.etiquetasPersonalizadas));
+                localStorage.setItem('librosEtiquetas', JSON.stringify(this.librosEtiquetas));
+                
+            } catch (e) {
+                console.warn('No se pudieron guardar los datos:', e);
+                if (e.name === 'QuotaExceededError') {
+                    this.limpiarCacheAntiguo();
+                }
+            }
+        }
+
+        // MÉTODO PARA BORRAR FILTROS
+        borrarFiltros() {
+            this.filtroActivo = 'all';
+            this.filtroEtiquetaActivo = null;
+            
+            // Actualizar botones de filtro de estado
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Activar botón "Todos"
+            const botonTodos = document.querySelector('.filter-btn[onclick*="all"]');
+            if (botonTodos) {
+                botonTodos.classList.add('active');
+            }
+            
+            // Actualizar interfaz de filtros de etiquetas
+            this.actualizarFiltrosEtiquetas();
+            
+            // Mostrar todos los libros
+            this.mostrarLibros();
+            
+            // Mostrar notificación
+            this.mostrarNotificacion('Filtros borrados. Mostrando todos los libros.', 'info');
+        }
+
+        // MÉTODOS PARA ETIQUETAS PERSONALIZADAS
+        
+        crearEtiquetaPersonalizada(nombre, color) {
+            if (!nombre || !nombre.trim()) {
+                this.mostrarNotificacion('Por favor ingresa un nombre para la etiqueta', 'warning');
+                return null;
+            }
+            
+            const nombreExistente = this.etiquetasPersonalizadas.find(et => 
+                et.nombre.toLowerCase() === nombre.toLowerCase().trim()
+            );
+            
+            if (nombreExistente) {
+                this.mostrarNotificacion('Ya existe una etiqueta con ese nombre', 'warning');
+                return null;
+            }
+            
+            const nuevaEtiqueta = {
+                id: `custom_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                nombre: nombre.trim(),
+                color: color,
+                tipo: 'personalizada',
+                fechaCreacion: new Date().toISOString()
+            };
+            
+            this.etiquetasPersonalizadas.push(nuevaEtiqueta);
+            this.guardarDatos();
+            this.mostrarNotificacion(`Etiqueta "${nombre}" creada`, 'success');
+            
+            // Actualizar filtros después de crear etiqueta
+            this.actualizarFiltrosEtiquetas();
+            
+            return nuevaEtiqueta;
+        }
+
+        eliminarEtiquetaPersonalizada(etiquetaId) {
+            const index = this.etiquetasPersonalizadas.findIndex(et => et.id === etiquetaId);
+            if (index === -1) return false;
+            
+            const etiqueta = this.etiquetasPersonalizadas[index];
+            
+            const librosConEstaEtiqueta = Object.keys(this.librosEtiquetas).filter(libroId => 
+                this.librosEtiquetas[libroId].id === etiquetaId
+            );
+            
+            if (librosConEstaEtiqueta.length > 0) {
+                if (!confirm(`La etiqueta "${etiqueta.nombre}" está siendo usada en ${librosConEstaEtiqueta.length} libro(s). ¿Deseas eliminarla de todos los libros y borrar la etiqueta?`)) {
+                    return false;
+                }
+                
+                librosConEstaEtiqueta.forEach(libroId => {
+                    delete this.librosEtiquetas[libroId];
+                });
+            }
+            
+            this.etiquetasPersonalizadas.splice(index, 1);
+            this.guardarDatos();
+            this.mostrarLibros();
+            this.mostrarNotificacion(`Etiqueta "${etiqueta.nombre}" eliminada`, 'info');
+            
+            // Actualizar filtros después de eliminar etiqueta
+            this.actualizarFiltrosEtiquetas();
+            
+            // Si el filtro activo es la etiqueta eliminada, borrar filtro
+            if (this.filtroEtiquetaActivo === etiquetaId) {
+                this.borrarFiltros();
+            }
+            
+            return true;
+        }
+
+        mostrarGestorEtiquetas() {
+            const modal = document.getElementById('tagManagerModal');
+            modal.classList.add('show');
+            this.actualizarListaEtiquetasPersonalizadas();
+        }
+
+        ocultarGestorEtiquetas() {
+            const modal = document.getElementById('tagManagerModal');
+            modal.classList.remove('show');
+        }
+
+        actualizarListaEtiquetasPersonalizadas() {
+            const lista = document.getElementById('customTagsList');
+            
+            if (this.etiquetasPersonalizadas.length === 0) {
+                lista.innerHTML = `
+                    <div style="text-align: center; padding: 30px; color: var(--gray);">
+                        <p style="font-size: 1.2em; margin-bottom: 10px;">No hay etiquetas personalizadas</p>
+                        <p>Crea tu primera etiqueta personalizada usando el formulario de abajo.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            lista.innerHTML = this.etiquetasPersonalizadas.map(etiqueta => `
+                <div class="custom-tag-item" style="border-left-color: ${etiqueta.color}">
+                    <div class="custom-tag-info">
+                        <div class="custom-tag-color" style="background: ${etiqueta.color}"></div>
+                        <div>
+                            <div class="custom-tag-name">${this.escapeHtml(etiqueta.nombre)}</div>
+                            <div style="font-size: 12px; color: var(--gray);">${etiqueta.color}</div>
+                        </div>
+                    </div>
+                    <div class="custom-tag-actions">
+                        <button class="tag-action-btn tag-edit-btn" onclick="buscador.editarEtiqueta('${etiqueta.id}')">
+                            Editar
+                        </button>
+                        <button class="tag-action-btn tag-delete-btn" onclick="buscador.eliminarEtiquetaPersonalizada('${etiqueta.id}')">
+                            Eliminar
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        editarEtiqueta(etiquetaId) {
+            const etiqueta = this.etiquetasPersonalizadas.find(et => et.id === etiquetaId);
+            if (!etiqueta) return;
+            
+            const nuevoNombre = prompt(`Editar nombre de la etiqueta:`, etiqueta.nombre);
+            if (nuevoNombre && nuevoNombre.trim() && nuevoNombre.trim() !== etiqueta.nombre) {
+                const nombreExistente = this.etiquetasPersonalizadas.find(et => 
+                    et.id !== etiquetaId && et.nombre.toLowerCase() === nuevoNombre.toLowerCase().trim()
+                );
+                
+                if (nombreExistente) {
+                    this.mostrarNotificacion('Ya existe otra etiqueta con ese nombre', 'warning');
+                    return;
+                }
+                
+                etiqueta.nombre = nuevoNombre.trim();
+                this.guardarDatos();
+                this.actualizarListaEtiquetasPersonalizadas();
+                this.actualizarFiltrosEtiquetas();
+                this.mostrarLibros();
+                this.mostrarNotificacion('Etiqueta actualizada', 'success');
+            }
+        }
+
+        // Método para asignar etiqueta a un libro - CORREGIDO
+        asignarEtiqueta(libroId, etiquetaId, nombre, color, tipo) {
+            if (!libroId) return;
+            
+            // Si se solicita eliminar la etiqueta
+            if (etiquetaId === 'remove') {
+                delete this.librosEtiquetas[libroId];
+                this.guardarDatos();
+                this.mostrarNotificacion('Etiqueta eliminada', 'info');
+                
+                // Actualizar la tarjeta CORRECTAMENTE
+                this.actualizarTarjetaEtiqueta(libroId, null);
+                
+                // Si estamos filtrando por esta etiqueta, refrescar filtro
+                if (this.filtroEtiquetaActivo === etiquetaId) {
+                    this.aplicarFiltrosActuales();
+                }
+                
+                return;
+            }
+            
+            // Crear objeto etiqueta
+            const etiqueta = {
+                id: etiquetaId,
+                nombre: nombre,
+                color: color,
+                tipo: tipo || 'predeterminada',
+                fechaAsignacion: new Date().toISOString()
+            };
+            
+            // Guardar la etiqueta
+            this.librosEtiquetas[libroId] = etiqueta;
+            
+            this.guardarDatos();
+            
+            // Actualizar la tarjeta CORRECTAMENTE
+            this.actualizarTarjetaEtiqueta(libroId, etiqueta);
+            
+            this.mostrarNotificacion(`Etiqueta "${nombre}" asignada`, 'success');
+            this.actualizarEstadisticas();
+            this.actualizarContadores();
+            
+            // Si estamos filtrando, refrescar filtro
+            if (this.filtroEtiquetaActivo || this.filtroActivo !== 'all') {
+                this.aplicarFiltrosActuales();
+            }
+        }
+
+        // NUEVO: Método para actualizar solo la etiqueta de la tarjeta
+        actualizarTarjetaEtiqueta(libroId, etiqueta) {
+            const card = document.getElementById(`card_${libroId}`);
+            if (!card) return;
+            
+            const indicator = card.querySelector('.tag-indicator');
+            const menu = document.getElementById(`tagMenu_${libroId}`);
+            
+            if (etiqueta) {
+                // Aplicar etiqueta
+                indicator.className = 'tag-indicator';
+                indicator.style.backgroundColor = etiqueta.color;
+                indicator.title = `${etiqueta.nombre} - Click para cambiar`;
+                
+                // Actualizar opción activa en el menú
+                if (menu) {
+                    menu.querySelectorAll('.tag-option').forEach(option => {
+                        option.classList.remove('active');
+                    });
+                }
+            } else {
+                // Quitar etiqueta
+                indicator.className = 'tag-indicator untagged';
+                indicator.style.backgroundColor = '';
+                indicator.title = 'Sin etiqueta - Click para asignar';
+                
+                // Remover opción activa en el menú
+                if (menu) {
+                    menu.querySelectorAll('.tag-option').forEach(option => {
+                        option.classList.remove('active');
+                    });
+                }
+            }
+        }
+
+        // Mostrar/ocultar menú de etiquetas
+        toggleMenuEtiquetas(libroId, event) {
+            if (event) event.stopPropagation();
+            
+            this.cerrarTodosLosMenus();
+            
+            const menu = document.getElementById(`tagMenu_${libroId}`);
+            if (menu) {
+                menu.classList.toggle('show');
+            }
+        }
+
+        // NUEVO: Actualizar filtros de etiquetas en la interfaz
+        actualizarFiltrosEtiquetas() {
+            const container = document.getElementById('tagFiltersContainer');
+            const todasLasEtiquetas = [
+                ...this.etiquetasPredeterminadas,
+                ...this.etiquetasPersonalizadas
             ];
             
-            // Solo mostrar mensaje si el usuario no ha interactuado aún
-            if (document.getElementById('tituloInput').value === '') {
-                ejemplos.forEach((libro, index) => {
-                    setTimeout(() => {
-                        this.buscarLibro(libro.titulo, libro.autor, 'completa');
-                    }, index * 500);
-                });
+            let html = `
+                <button class="filter-btn ${this.filtroEtiquetaActivo === 'todas-etiquetas' ? 'active' : ''}" onclick="filterByTag('todas-etiquetas')">
+                    <span>🏷️</span>
+                    <span>Todas las Etiquetas</span>
+                </button>
+                <button class="filter-btn ${this.filtroEtiquetaActivo === 'sin-etiqueta' ? 'active' : ''}" onclick="filterByTag('sin-etiqueta')">
+                    <span>🔘</span>
+                    <span>Sin Etiqueta</span>
+                </button>
+            `;
+            
+            todasLasEtiquetas.forEach(etiqueta => {
+                const activo = this.filtroEtiquetaActivo === etiqueta.id ? 'active' : '';
+                html += `
+                    <button class="tag-filter-btn ${activo}" 
+                            onclick="filterByTag('${etiqueta.id}')"
+                            style="background: ${etiqueta.color}20; color: ${etiqueta.color}; border: 2px solid ${etiqueta.color}30;">
+                        <span class="tag-filter-color" style="background: ${etiqueta.color}"></span>
+                        <span>${etiqueta.nombre}</span>
+                    </button>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+
+        // NUEVO: Filtrar libros por etiqueta
+        filtrarLibrosPorEtiqueta(etiquetaId = null) {
+            this.filtroEtiquetaActivo = etiquetaId;
+            
+            // Actualizar estado de botones
+            this.actualizarFiltrosEtiquetas();
+            
+            // Aplicar filtros actuales
+            this.aplicarFiltrosActuales();
+        }
+
+        // NUEVO: Método para aplicar filtro de estado
+        aplicarFiltrosActuales() {
+            const cards = document.querySelectorAll('.book-card');
+            let hayResultados = false;
+            
+            cards.forEach(card => {
+                const libroId = card.id.replace('card_', '');
+                const etiquetaAsignada = this.librosEtiquetas[libroId];
                 
-                localStorage.setItem('datosEjemplo', 'cargados');
+                let mostrar = true;
+                
+                // Aplicar filtro de etiqueta si existe
+                if (this.filtroEtiquetaActivo) {
+                    if (this.filtroEtiquetaActivo === 'todas-etiquetas') {
+                        // Mostrar solo libros que tienen etiqueta
+                        mostrar = !!etiquetaAsignada;
+                    } else if (this.filtroEtiquetaActivo === 'sin-etiqueta') {
+                        // Mostrar solo libros sin etiqueta
+                        mostrar = !etiquetaAsignada;
+                    } else {
+                        // Mostrar solo libros con una etiqueta específica
+                        mostrar = etiquetaAsignada && etiquetaAsignada.id === this.filtroEtiquetaActivo;
+                    }
+                }
+                
+                // Aplicar también el filtro de estado si hay uno activo y el libro todavía pasa el filtro
+                if (mostrar && this.filtroActivo !== 'all') {
+                    mostrar = this.aplicarFiltroEstado(card, this.filtroActivo);
+                }
+                
+                card.style.display = mostrar ? 'block' : 'none';
+                if (mostrar) {
+                    card.style.animation = 'fadeIn 0.3s ease';
+                    hayResultados = true;
+                }
+            });
+            
+            // Si no hay resultados y hay filtros activos, mostrar mensaje
+            if (!hayResultados && (this.filtroActivo !== 'all' || this.filtroEtiquetaActivo)) {
+                this.mostrarMensajeSinResultados();
+            } else if (!hayResultados && this.libros.length === 0) {
+                // No hay libros en absoluto
+                this.mostrarMensajeBienvenida();
             }
+        }
+
+        // NUEVO: Método para aplicar filtro de estado
+        aplicarFiltroEstado(card, filtro) {
+            switch(filtro) {
+                case 'all':
+                    return true;
+                case 'audio':
+                    return card.querySelector('.link-item.audio') !== null;
+                case 'torrent':
+                    return card.querySelector('.link-item.torrent') !== null;
+                case 'descarga':
+                    return card.querySelector('.link-item.directo') !== null;
+                case 'descargados':
+                    return card.classList.contains('descargado');
+                case 'no-encontrados':
+                    return card.classList.contains('no-encontrado');
+                default:
+                    return true;
+            }
+        }
+
+        // NUEVO: Mostrar mensaje cuando no hay resultados
+        mostrarMensajeSinResultados() {
+            const grid = document.getElementById('booksGrid');
+            let mensaje = '';
+            
+            // Construir mensaje según los filtros activos
+            if (this.filtroEtiquetaActivo && this.filtroActivo !== 'all') {
+                const etiqueta = this.obtenerNombreEtiqueta(this.filtroEtiquetaActivo);
+                const filtroEstado = this.obtenerNombreFiltro(this.filtroActivo);
+                mensaje = `No hay libros con la etiqueta "${etiqueta}" y estado "${filtroEstado}"`;
+            } else if (this.filtroEtiquetaActivo) {
+                const etiqueta = this.obtenerNombreEtiqueta(this.filtroEtiquetaActivo);
+                mensaje = `No hay libros con la etiqueta "${etiqueta}"`;
+            } else if (this.filtroActivo !== 'all') {
+                const filtro = this.obtenerNombreFiltro(this.filtroActivo);
+                mensaje = `No hay libros con el filtro "${filtro}"`;
+            }
+            
+            const mensajeDiv = document.createElement('div');
+            mensajeDiv.className = 'welcome-message';
+            mensajeDiv.innerHTML = `
+                <h3><span>🔍</span> No se encontraron resultados</h3>
+                <p>${mensaje}.</p>
+                <div style="display: flex; gap: 10px; justify-content: center; margin-top: 20px;">
+                    <button onclick="borrarFiltros()" style="
+                        padding: 12px 24px;
+                        background: var(--primary);
+                        color: white;
+                        border: none;
+                        border-radius: 50px;
+                        cursor: pointer;
+                        font-weight: 500;
+                    ">Borrar Filtros y Ver Todos</button>
+                </div>
+            `;
+            
+            grid.innerHTML = '';
+            grid.appendChild(mensajeDiv);
+        }
+
+        // NUEVO: Mostrar mensaje de bienvenida cuando no hay libros
+        mostrarMensajeBienvenida() {
+            const grid = document.getElementById('booksGrid');
+            grid.innerHTML = `
+                <div class="welcome-message">
+                    <h3><span>👋</span> ¡Comienza a buscar audiolibros!</h3>
+                    <p>Usa el formulario de arriba para buscar libros individualmente.</p>
+                    <p><strong>Nueva funcionalidad:</strong> Crea etiquetas personalizadas con colores únicos y filtra por ellas.</p>
+                </div>
+            `;
+        }
+
+        // NUEVO: Obtener nombre de etiqueta para mensaje
+        obtenerNombreEtiqueta(etiquetaId) {
+            if (etiquetaId === 'todas-etiquetas') return 'Todas las Etiquetas';
+            if (etiquetaId === 'sin-etiqueta') return 'Sin Etiqueta';
+            
+            const etiqueta = [...this.etiquetasPredeterminadas, ...this.etiquetasPersonalizadas]
+                .find(e => e.id === etiquetaId);
+            return etiqueta ? etiqueta.nombre : etiquetaId;
+        }
+
+        // NUEVO: Obtener nombre de filtro para mensaje
+        obtenerNombreFiltro(filtro) {
+            const nombres = {
+                'all': 'Todos',
+                'audio': 'Audiolibros',
+                'torrent': 'Torrents',
+                'descarga': 'Descargas',
+                'descargados': 'Descargados',
+                'no-encontrados': 'No Encontrados'
+            };
+            return nombres[filtro] || filtro;
         }
 
         cargarLibrosGuardados() {
@@ -1452,39 +2032,188 @@ limpiarIdsHuerfanos() {
             }
         }
 
-        guardarDatos() {
-            try {
-                localStorage.setItem('librosGuardados', JSON.stringify(this.libros));
-                localStorage.setItem('librosDescargados', JSON.stringify(this.librosDescargados));
-                localStorage.setItem('librosNoEncontrados', JSON.stringify(this.librosNoEncontrados));
+        // MODIFICADO: Ordenamiento con "No Encontrados" al final
+        mostrarLibros() {
+            const grid = document.getElementById('booksGrid');
+            
+            if (this.libros.length === 0) {
+                this.mostrarMensajeBienvenida();
+                return;
+            }
+
+            // NUEVO ORDENAMIENTO: No encontrados al final, luego por fecha (más recientes primero)
+            const librosOrdenados = [...this.libros].sort((a, b) => {
+                const aNoEncontrado = this.librosNoEncontrados[a.id] || false;
+                const bNoEncontrado = this.librosNoEncontrados[b.id] || false;
                 
-                console.log('Datos guardados:', {
-                    libros: this.libros.length,
-                    descargados: Object.keys(this.librosDescargados).length,
-                    noEncontrados: Object.keys(this.librosNoEncontrados).length
-                });
+                // PRIMERO: Los NO encontrados van AL FINAL
+                if (aNoEncontrado && !bNoEncontrado) return 1;
+                if (!aNoEncontrado && bNoEncontrado) return -1;
                 
-                // Verificar estado después de guardar
-                this.verificarEstadoLibros();
-                
-            } catch (e) {
-                console.warn('No se pudieron guardar los datos:', e);
-                // Limpiar datos antiguos si hay error de almacenamiento
-                if (e.name === 'QuotaExceededError') {
-                    this.limpiarCacheAntiguo();
-                }
+                // SEGUNDO: Ordenar por fecha (más recientes primero)
+                return b.timestamp - a.timestamp;
+            });
+
+            grid.innerHTML = librosOrdenados.map(libro => this.crearTarjetaLibro(libro)).join('');
+            this.aplicarMarcadoresGuardados();
+            
+            // Aplicar filtros actuales si hay alguno activo
+            if (this.filtroActivo !== 'all' || this.filtroEtiquetaActivo) {
+                this.aplicarFiltrosActuales();
             }
         }
 
-        limpiarCacheAntiguo() {
-            // Mantener solo los últimos 50 libros si hay problema de espacio
-            if (this.libros.length > 50) {
-                this.libros = this.libros.slice(0, 50);
-                this.guardarDatos();
-                alert('Se han eliminado libros antiguos para liberar espacio.');
+        // CORREGIDO: Estructura de la tarjeta mejorada (sin errores de sintaxis)
+        crearTarjetaLibro(libro) {
+            if (!libro.titulo) {
+                console.error('Libro sin título:', libro);
+                return '';
             }
+            
+            const torrentCount = libro.enlaces ? libro.enlaces.filter(e => e.tipo === 'TORRENT').length : 0;
+            const directoCount = libro.enlaces ? libro.enlaces.filter(e => e.esDirecto).length : 0;
+            const audioCount = libro.enlaces ? libro.enlaces.filter(e => e.tipo === 'AUDIOLIBRO').length : 0;
+            const fecha = libro.fechaBusqueda ? new Date(libro.fechaBusqueda).toLocaleDateString('es-ES', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric'
+            }) : 'Fecha desconocida';
+            
+            const esDescargado = this.librosDescargados[libro.id];
+            const esNoEncontrado = this.librosNoEncontrados[libro.id];
+            const etiquetaAsignada = this.librosEtiquetas[libro.id];
+            
+            // Determinar etiqueta actual
+            let tagClass = 'untagged';
+            let tagStyle = '';
+            let tagTitle = 'Sin etiqueta - Click para asignar';
+            
+            if (etiquetaAsignada) {
+                tagClass = '';
+                tagStyle = `style="background: ${etiquetaAsignada.color}"`;
+                tagTitle = `${etiquetaAsignada.nombre} - Click para cambiar`;
+            }
+
+            return `
+                <div class="book-card ${esDescargado ? 'descargado' : ''} ${esNoEncontrado ? 'no-encontrado' : ''}" id="card_${libro.id}">
+                    
+                    <!-- Indicador de etiqueta - CORREGIDO -->
+                    <div class="tag-indicator ${tagClass}" 
+                         ${tagStyle}
+                         onclick="buscador.toggleMenuEtiquetas('${libro.id}', event)"
+                         title="${tagTitle}">
+                    </div>
+                    
+                    <!-- Checkboxes para descargado/no encontrado - POSICIÓN CORREGIDA -->
+                    <div class="checkbox-container">
+                        <div class="checkbox-group descargado">
+                            <input type="checkbox" id="check_descargado_${libro.id}" class="descargado-checkbox" 
+                                   onchange="buscador.actualizarMarcador('descargado', this)" 
+                                   ${esDescargado ? 'checked' : ''} 
+                                   ${esNoEncontrado ? 'disabled' : ''}>
+                            <label for="check_descargado_${libro.id}" title="Marcar como descargado">
+                                <span style="font-size: 1.2em;">✓</span>
+                                <span style="font-size: 0.8em;">Descargado</span>
+                            </label>
+                        </div>
+                        
+                        <div class="checkbox-group no-encontrado">
+                            <input type="checkbox" id="check_noencontrado_${libro.id}" class="no-encontrado-checkbox" 
+                                   onchange="buscador.actualizarMarcador('no-encontrado', this)" 
+                                   ${esNoEncontrado ? 'checked' : ''} 
+                                   ${esDescargado ? 'disabled' : ''}>
+                            <label for="check_noencontrado_${libro.id}" title="Marcar como no encontrado">
+                                <span style="font-size: 1.2em;">✗</span>
+                                <span style="font-size: 0.8em;">No Encontrado</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- Menú desplegable de etiquetas - CORREGIDO (sin errores de sintaxis) -->
+                    <div class="tag-menu" id="tagMenu_${libro.id}">
+                        <h4>Asignar Etiqueta</h4>
+                        
+                        <div class="tag-section-title">Etiquetas Predeterminadas</div>
+                        <div class="tag-options">
+                            ${this.etiquetasPredeterminadas.map(etiqueta => `
+                                <button class="tag-option ${etiquetaAsignada?.id === etiqueta.id ? 'active' : ''}" 
+                                        onclick="buscador.asignarEtiqueta('${libro.id}', '${etiqueta.id}', '${this.escapeHtml(etiqueta.nombre)}', '${etiqueta.color}', 'predeterminada')">
+                                    <span class="tag-color" style="background: ${etiqueta.color}"></span>
+                                    <span>${etiqueta.nombre}</span>
+                                </button>
+                            `).join('')}
+                        </div>
+                        
+                        ${this.etiquetasPersonalizadas.length > 0 ? `
+                            <div class="tag-section-title">Etiquetas Personalizadas</div>
+                            <div class="tag-options">
+                                ${this.etiquetasPersonalizadas.map(etiqueta => `
+                                    <button class="tag-option ${etiquetaAsignada?.id === etiqueta.id ? 'active' : ''}" 
+                                            onclick="buscador.asignarEtiqueta('${libro.id}', '${etiqueta.id}', '${this.escapeHtml(etiqueta.nombre)}', '${etiqueta.color}', 'personalizada')">
+                                        <span class="tag-color" style="background: ${etiqueta.color}"></span>
+                                        <span>${etiqueta.nombre}</span>
+                                    </button>
+                                `).join('')}
+                            </div>
+                        ` : ''}
+                        
+                        ${etiquetaAsignada ? `
+                            <div class="tag-options" style="margin-top: 15px;">
+                                <button class="tag-option" 
+                                        onclick="buscador.asignarEtiqueta('${libro.id}', 'remove')"
+                                        style="color: var(--danger);">
+                                    <span>✗</span>
+                                    <span>Eliminar etiqueta</span>
+                                </button>
+                            </div>
+                        ` : ''}
+                    </div>
+                    
+                    <!-- Contenido de la tarjeta - ESTILOS CORREGIDOS -->
+                    <div class="book-header">
+                        <div class="book-title">${this.escapeHtml(libro.titulo)}</div>
+                        <div class="book-author">${this.escapeHtml(libro.autor || 'Autor desconocido')}</div>
+                        <small class="fecha-busqueda">Búsqueda: ${fecha}</small>
+                    </div>
+                    
+                    <div class="book-meta">
+                        <span class="badge ${libro.prioridadAudio === 'ALTA' ? 'badge-audio' : 'badge-educativo'}">
+                            ${libro.prioridadAudio === 'ALTA' ? '🎧' : '📚'} ${libro.prioridadAudio || 'MEDIA'}
+                        </span>
+                        <span class="badge ${libro.esEducativo === 'Sí' ? 'badge-educativo' : 'badge-descarga'}">
+                            📚 ${libro.esEducativo || 'No'}
+                        </span>
+                        ${torrentCount > 0 ? `<span class="badge badge-torrent">🧲 ${torrentCount} torrents</span>` : ''}
+                        ${directoCount > 0 ? `<span class="badge badge-directo">📥 ${directoCount} directos</span>` : ''}
+                        ${audioCount > 0 ? `<span class="badge badge-audio">🎧 ${audioCount} audiolibros</span>` : ''}
+                        ${esNoEncontrado ? `<span class="badge badge-no-encontrado">✗ No Encontrado</span>` : ''}
+                        ${etiquetaAsignada ? `<span class="badge" style="background: ${etiquetaAsignada.color}20; color: ${etiquetaAsignada.color};">
+                            <span style="display: inline-block; width: 10px; height: 10px; background: ${etiquetaAsignada.color}; border-radius: 50%; margin-right: 5px;"></span>
+                            ${etiquetaAsignada.nombre}
+                        </span>` : ''}
+                    </div>
+                    
+                    <div class="links-section">
+                        <div class="platform-links">
+                            ${libro.enlaces && libro.enlaces.length > 0 ? libro.enlaces.map(enlace => `
+                                <a href="${enlace.url}" target="_blank" rel="noopener noreferrer" 
+                                   class="link-item ${enlace.tipo ? enlace.tipo.toLowerCase() : 'busqueda'}"
+                                   title="${enlace.plataforma} - ${enlace.url}">
+                                    <span class="link-icon">${enlace.icono || '🔗'}</span>
+                                    <div class="link-content">
+                                        <span class="link-text">${enlace.plataforma}</span>
+                                        <span class="link-url">${this.acortarURL(enlace.url)}</span>
+                                    </div>
+                                    <span class="link-type">${enlace.tipo || 'BUSQUEDA'}</span>
+                                </a>
+                            `).join('') : '<div class="no-enlaces-mensaje">No se encontraron enlaces para este libro</div>'}
+                        </div>
+                    </div>
+                </div>
+            `;
         }
 
+        // MÉTODOS DE EXPORTACIÓN E IMPORTACIÓN
         exportarDatosCompletos() {
             if (this.libros.length === 0) {
                 this.mostrarNotificacion('No hay datos para exportar', 'warning');
@@ -1495,11 +2224,15 @@ limpiarIdsHuerfanos() {
                 libros: this.libros,
                 librosDescargados: this.librosDescargados,
                 librosNoEncontrados: this.librosNoEncontrados,
+                etiquetasPersonalizadas: this.etiquetasPersonalizadas,
+                librosEtiquetas: this.librosEtiquetas,
                 fechaExportacion: new Date().toISOString(),
-                version: '2.2',
+                version: '4.0',
                 totalLibros: this.libros.length,
                 totalDescargados: Object.keys(this.librosDescargados).length,
-                totalNoEncontrados: Object.keys(this.librosNoEncontrados).length
+                totalNoEncontrados: Object.keys(this.librosNoEncontrados).length,
+                totalEtiquetasPersonalizadas: this.etiquetasPersonalizadas.length,
+                totalLibrosEtiquetados: Object.keys(this.librosEtiquetas).length
             };
 
             const contenido = JSON.stringify(datos, null, 2);
@@ -1508,18 +2241,16 @@ limpiarIdsHuerfanos() {
             const a = document.createElement('a');
             a.href = url;
             const fecha = new Date().toISOString().split('T')[0];
-            a.download = `audiolibros_backup_${fecha}.json`;
+            a.download = `audiolibros_completo_${fecha}.json`;
             
-            // Agregar animación de descarga
             a.style.display = 'none';
             document.body.appendChild(a);
             a.click();
             
-            // Limpiar
             setTimeout(() => {
                 document.body.removeChild(a);
                 URL.revokeObjectURL(url);
-                this.mostrarNotificacion('Backup exportado correctamente', 'success');
+                this.mostrarNotificacion(`Backup exportado con ${this.etiquetasPersonalizadas.length} etiquetas personalizadas`, 'success');
             }, 100);
         }
 
@@ -1532,58 +2263,64 @@ limpiarIdsHuerfanos() {
                 const file = e.target.files[0];
                 if (!file) return;
                 
-                // Mostrar carga
-                const btn = event.target;
-                const originalText = btn.innerHTML;
-                btn.innerHTML = '<span class="loading"></span>';
-                btn.disabled = true;
-                
                 const reader = new FileReader();
                 reader.onload = (event) => {
                     try {
                         const datos = JSON.parse(event.target.result);
                         
-                        // Validar datos
                         if (!datos.libros || !Array.isArray(datos.libros)) {
                             throw new Error('Formato de archivo inválido');
                         }
                         
-                        setTimeout(() => {
-                            const descargados = Object.keys(datos.librosDescargados || {}).length;
-                            const noEncontrados = Object.keys(datos.librosNoEncontrados || {}).length;
+                        const totalEtiquetas = datos.etiquetasPersonalizadas?.length || 0;
+                        const totalLibrosEtiquetados = Object.keys(datos.librosEtiquetas || {}).length;
+                        
+                        const mensajeConfirmacion = `¿Importar ${datos.libros.length} libros?\n\n` +
+                            `Incluye:\n` +
+                            `• ${Object.keys(datos.librosDescargados || {}).length} marcados como descargados\n` +
+                            `• ${Object.keys(datos.librosNoEncontrados || {}).length} marcados como no encontrados\n` +
+                            `• ${totalEtiquetas} etiquetas personalizadas\n` +
+                            `• ${totalLibrosEtiquetados} libros con etiquetas asignadas\n\n` +
+                            `Esto sobrescribirá los datos actuales.`;
+                        
+                        if (confirm(mensajeConfirmacion)) {
+                            this.libros = datos.libros || [];
+                            this.librosDescargados = datos.librosDescargados || {};
+                            this.librosNoEncontrados = datos.librosNoEncontrados || {};
                             
-                            if (confirm(`¿Importar ${datos.libros.length} libros? Incluye:
-• ${descargados} marcados como descargados
-• ${noEncontrados} marcados como no encontrados
-
-Esto sobrescribirá los datos actuales.`)) {
-                                this.libros = datos.libros || [];
-                                this.librosDescargados = datos.librosDescargados || {};
-                                this.librosNoEncontrados = datos.librosNoEncontrados || {};
-                                
-                                this.guardarDatos();
-                                this.mostrarLibros();
-                                this.actualizarEstadisticas();
-                                this.actualizarContadores();
-                                
-                                const mensaje = `Importados ${datos.libros.length} libros:
-• ${descargados} descargados
-• ${noEncontrados} no encontrados`;
-                                this.mostrarNotificacion(mensaje, 'success');
+                            if (datos.etiquetasPersonalizadas && Array.isArray(datos.etiquetasPersonalizadas)) {
+                                this.etiquetasPersonalizadas = datos.etiquetasPersonalizadas;
                             }
-                        }, 300);
+                            
+                            if (datos.librosEtiquetas && typeof datos.librosEtiquetas === 'object') {
+                                this.librosEtiquetas = datos.librosEtiquetas;
+                            }
+                            
+                            // Borrar filtros activos
+                            this.borrarFiltros();
+                            
+                            this.guardarDatos();
+                            this.mostrarLibros();
+                            this.actualizarEstadisticas();
+                            this.actualizarContadores();
+                            this.actualizarListaEtiquetasPersonalizadas();
+                            this.actualizarFiltrosEtiquetas();
+                            
+                            const mensajeExito = `Importados ${datos.libros.length} libros:\n` +
+                                `• ${Object.keys(datos.librosDescargados || {}).length} descargados\n` +
+                                `• ${Object.keys(datos.librosNoEncontrados || {}).length} no encontrados\n` +
+                                `• ${totalEtiquetas} etiquetas personalizadas\n` +
+                                `• ${totalLibrosEtiquetados} libros etiquetados`;
+                            
+                            this.mostrarNotificacion(mensajeExito, 'success');
+                        }
                     } catch (error) {
                         this.mostrarNotificacion(`Error: ${error.message}`, 'error');
-                    } finally {
-                        btn.innerHTML = originalText;
-                        btn.disabled = false;
                     }
                 };
                 
                 reader.onerror = () => {
                     this.mostrarNotificacion('Error al leer el archivo', 'error');
-                    btn.innerHTML = originalText;
-                    btn.disabled = false;
                 };
                 
                 reader.readAsText(file);
@@ -1592,8 +2329,267 @@ Esto sobrescribirá los datos actuales.`)) {
             input.click();
         }
 
+        // Métodos auxiliares
+        actualizarEstadisticas() {
+            const totalLibros = this.libros.length;
+            const totalEnlaces = this.libros.reduce((sum, libro) => sum + (libro.enlaces ? libro.enlaces.length : 0), 0);
+            const descargadosCount = Object.keys(this.librosDescargados).length;
+            const noEncontradosCount = Object.keys(this.librosNoEncontrados).length;
+            const etiquetadosCount = Object.keys(this.librosEtiquetas).length;
+
+            document.getElementById('totalLibros').textContent = totalLibros.toLocaleString();
+            document.getElementById('totalEnlaces').textContent = totalEnlaces.toLocaleString();
+            document.getElementById('descargadosCount').textContent = descargadosCount.toLocaleString();
+            document.getElementById('noEncontradosCount').textContent = noEncontradosCount.toLocaleString();
+            document.getElementById('etiquetadosCount').textContent = etiquetadosCount.toLocaleString();
+        }
+
+        buscarLibro(titulo, autor, tipoBusqueda = 'completa') {
+            if (!titulo || !titulo.trim()) {
+                this.mostrarNotificacion('Por favor ingresa al menos el título del libro', 'warning');
+                document.getElementById('tituloInput').focus();
+                return;
+            }
+
+            if (!autor || !autor.trim()) {
+                autor = 'Autor Desconocido';
+            }
+
+            const libroExistente = this.libros.find(libro => 
+                libro.titulo && libro.titulo.toLowerCase() === titulo.toLowerCase() && 
+                libro.autor && libro.autor.toLowerCase() === autor.toLowerCase()
+            );
+
+            const libroId = libroExistente ? libroExistente.id : `libro_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+            const libro = {
+                id: libroId,
+                titulo: titulo.trim(),
+                autor: autor.trim(),
+                esEducativo: this.esEducativo(titulo) ? 'Sí' : 'No',
+                prioridadAudio: this.esEducativo(titulo) ? 'MEDIA' : 'ALTA',
+                enlaces: [],
+                fechaBusqueda: new Date().toISOString(),
+                timestamp: Date.now()
+            };
+
+            const todosEnlaces = this.generarEnlaces(titulo, autor);
+            let enlacesFiltrados = 0;
+            
+            Object.entries(todosEnlaces).forEach(([plataforma, url]) => {
+                const analisis = this.analizarEnlace(plataforma, url);
+                
+                let incluir = true;
+                if (tipoBusqueda === 'audiolibros') {
+                    incluir = ['AUDIOLIBRO', 'TORRENT'].includes(analisis.tipo);
+                } else if (tipoBusqueda === 'torrents') {
+                    incluir = analisis.tipo === 'TORRENT';
+                } else if (tipoBusqueda === 'descargas') {
+                    incluir = ['DESCARGA', 'TORRENT'].includes(analisis.tipo);
+                }
+
+                if (incluir) {
+                    libro.enlaces.push({
+                        plataforma: plataforma,
+                        url: url,
+                        tipo: analisis.tipo,
+                        icono: analisis.icono,
+                        esDirecto: analisis.esDirecto
+                    });
+                    enlacesFiltrados++;
+                }
+            });
+
+            if (libroExistente) {
+                const index = this.libros.findIndex(l => l.id === libroExistente.id);
+                if (index !== -1) {
+                    const marcadoresPreservados = {
+                        descargado: this.librosDescargados[libroExistente.id],
+                        noEncontrado: this.librosNoEncontrados[libroExistente.id],
+                        etiqueta: this.librosEtiquetas[libroExistente.id]
+                    };
+                    
+                    this.libros[index] = libro;
+                    
+                    if (marcadoresPreservados.descargado) {
+                        this.librosDescargados[libroId] = marcadoresPreservados.descargado;
+                    }
+                    if (marcadoresPreservados.noEncontrado) {
+                        this.librosNoEncontrados[libroId] = marcadoresPreservados.noEncontrado;
+                    }
+                    if (marcadoresPreservados.etiqueta) {
+                        this.librosEtiquetas[libroId] = marcadoresPreservados.etiqueta;
+                    }
+                    
+                    delete this.librosDescargados[libroExistente.id];
+                    delete this.librosNoEncontrados[libroExistente.id];
+                    delete this.librosEtiquetas[libroExistente.id];
+                }
+            } else {
+                this.libros.unshift(libro);
+            }
+
+            if (enlacesFiltrados === 0) {
+                this.librosNoEncontrados[libroId] = {
+                    fecha: new Date().toISOString(),
+                    razon: 'No se encontraron enlaces válidos en la búsqueda'
+                };
+                delete this.librosDescargados[libroId];
+            } else {
+                delete this.librosNoEncontrados[libroId];
+            }
+
+            this.guardarDatos();
+            this.mostrarLibros();
+            this.actualizarEstadisticas();
+            this.actualizarContadores();
+
+            document.getElementById('tituloInput').value = '';
+            document.getElementById('autorInput').value = '';
+            document.getElementById('tituloInput').focus();
+
+            if (enlacesFiltrados > 0) {
+                const mensaje = tipoBusqueda === 'completa' 
+                    ? `"${titulo}" - ${enlacesFiltrados} enlaces encontrados`
+                    : `"${titulo}" - ${enlacesFiltrados} enlaces de ${tipoBusqueda}`;
+                this.mostrarNotificacion(mensaje, 'success');
+            } else {
+                this.mostrarNotificacion(`"${titulo}" - No se encontraron enlaces. Marcado como "No Encontrado".`, 'warning');
+            }
+        }
+
+        actualizarMarcador(tipo, checkbox) {
+            const card = checkbox.closest('.book-card');
+            const checkboxId = checkbox.id;
+            
+            let libroId;
+            if (tipo === 'descargado') {
+                libroId = checkboxId.replace('check_descargado_', '');
+            } else if (tipo === 'no-encontrado') {
+                libroId = checkboxId.replace('check_noencontrado_', '');
+            }
+            
+            const descargadoCheckbox = document.getElementById(`check_descargado_${libroId}`);
+            const noEncontradoCheckbox = document.getElementById(`check_noencontrado_${libroId}`);
+            
+            if (tipo === 'descargado') {
+                if (checkbox.checked) {
+                    card.classList.add('descargado');
+                    this.librosDescargados[libroId] = true;
+                    
+                    if (noEncontradoCheckbox) {
+                        noEncontradoCheckbox.checked = false;
+                        noEncontradoCheckbox.disabled = true;
+                    }
+                    
+                    card.classList.remove('no-encontrado');
+                    delete this.librosNoEncontrados[libroId];
+                    
+                    this.mostrarNotificacion('Libro marcado como descargado', 'success');
+                    
+                } else {
+                    card.classList.remove('descargado');
+                    delete this.librosDescargados[libroId];
+                    
+                    if (noEncontradoCheckbox) {
+                        noEncontradoCheckbox.disabled = false;
+                    }
+                    
+                    this.mostrarNotificacion('Marcador de descargado eliminado', 'info');
+                }
+            } else if (tipo === 'no-encontrado') {
+                if (checkbox.checked) {
+                    card.classList.add('no-encontrado');
+                    this.librosNoEncontrados[libroId] = {
+                        fecha: new Date().toISOString(),
+                        razon: 'Marcado manualmente por el usuario'
+                    };
+                    
+                    if (descargadoCheckbox) {
+                        descargadoCheckbox.checked = false;
+                        descargadoCheckbox.disabled = true;
+                    }
+                    
+                    card.classList.remove('descargado');
+                    delete this.librosDescargados[libroId];
+                    
+                    this.mostrarNotificacion('Libro marcado como no encontrado', 'warning');
+                } else {
+                    card.classList.remove('no-encontrado');
+                    delete this.librosNoEncontrados[libroId];
+                    
+                    if (descargadoCheckbox) {
+                        descargadoCheckbox.disabled = false;
+                    }
+                    
+                    this.mostrarNotificacion('Marcador de no encontrado eliminado', 'info');
+                }
+            }
+            
+            this.guardarDatos();
+            this.actualizarContadores();
+            this.actualizarEstadisticas();
+            
+            // Si hay filtros activos, aplicar nuevamente
+            if (this.filtroActivo !== 'all' || this.filtroEtiquetaActivo) {
+                this.aplicarFiltrosActuales();
+            }
+        }
+
+        aplicarMarcadoresGuardados() {
+            Object.keys(this.librosDescargados).forEach(libroId => {
+                const checkbox = document.getElementById('check_descargado_' + libroId);
+                const otroCheckbox = document.getElementById('check_noencontrado_' + libroId);
+                if (checkbox) {
+                    checkbox.checked = true;
+                    if (checkbox.closest('.book-card')) {
+                        checkbox.closest('.book-card').classList.add('descargado');
+                    }
+                    if (otroCheckbox) otroCheckbox.disabled = true;
+                }
+            });
+            
+            Object.keys(this.librosNoEncontrados).forEach(libroId => {
+                const checkbox = document.getElementById('check_noencontrado_' + libroId);
+                const otroCheckbox = document.getElementById('check_descargado_' + libroId);
+                if (checkbox) {
+                    checkbox.checked = true;
+                    if (checkbox.closest('.book-card')) {
+                        checkbox.closest('.book-card').classList.add('no-encontrado');
+                    }
+                    if (otroCheckbox) otroCheckbox.disabled = true;
+                }
+            });
+        }
+
+        actualizarContadores() {
+            const countDescargados = Object.keys(this.librosDescargados).length;
+            const countNoEncontrados = Object.keys(this.librosNoEncontrados).length;
+            const countEtiquetados = Object.keys(this.librosEtiquetas).length;
+            
+            document.getElementById('contador-descargados').textContent = 
+                `${countDescargados} descargado${countDescargados !== 1 ? 's' : ''}`;
+            document.getElementById('contador-no-encontrados').textContent = 
+                `${countNoEncontrados} no encontrado${countNoEncontrados !== 1 ? 's' : ''}`;
+            document.getElementById('contador-etiquetas').textContent = 
+                `${countEtiquetados} etiquetado${countEtiquetados !== 1 ? 's' : ''}`;
+        }
+
+        // Métodos auxiliares
+        escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        acortarURL(url, maxLength = 50) {
+            if (!url) return '';
+            if (url.length <= maxLength) return url;
+            return url.substring(0, maxLength) + '...';
+        }
+
         mostrarNotificacion(mensaje, tipo = 'info') {
-            // Crear notificación
             const notificacion = document.createElement('div');
             notificacion.style.cssText = `
                 position: fixed;
@@ -1631,7 +2627,6 @@ Esto sobrescribirá los datos actuales.`)) {
             
             document.body.appendChild(notificacion);
             
-            // Auto-eliminar después de 4 segundos
             setTimeout(() => {
                 notificacion.style.animation = 'slideOutRight 0.3s ease';
                 setTimeout(() => {
@@ -1639,7 +2634,6 @@ Esto sobrescribirá los datos actuales.`)) {
                 }, 300);
             }, 4000);
             
-            // Agregar estilos de animación
             if (!document.getElementById('notificacion-estilos')) {
                 const estilos = document.createElement('style');
                 estilos.id = 'notificacion-estilos';
@@ -1657,353 +2651,19 @@ Esto sobrescribirá los datos actuales.`)) {
             }
         }
 
-        configurarDragAndDrop() {
-            const uploadArea = document.getElementById('uploadArea');
-            const fileInput = document.getElementById('csvFileInput');
-
-            uploadArea.addEventListener('click', () => fileInput.click());
-
-            uploadArea.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                uploadArea.classList.add('dragover');
-            });
-
-            uploadArea.addEventListener('dragleave', () => {
-                uploadArea.classList.remove('dragover');
-            });
-
-            uploadArea.addEventListener('drop', (e) => {
-                e.preventDefault();
-                uploadArea.classList.remove('dragover');
-                const files = e.dataTransfer.files;
-                if (files.length > 0) {
-                    this.procesarArchivoCSV(files[0]);
-                }
-            });
-
-            fileInput.addEventListener('change', (e) => {
-                if (e.target.files.length > 0) {
-                    this.procesarArchivoCSV(e.target.files[0]);
-                }
-            });
-        }
-
-        procesarArchivoCSV(file) {
-            if (!file.name.toLowerCase().endsWith('.csv')) {
-                this.mostrarNotificacion('Por favor selecciona un archivo CSV válido', 'error');
-                return;
-            }
-
-            // Mostrar carga
-            const uploadArea = document.getElementById('uploadArea');
-            const originalHTML = uploadArea.innerHTML;
-            uploadArea.innerHTML = '<div class="loading"></div>';
-            uploadArea.style.pointerEvents = 'none';
-
-            const reader = new FileReader();
-            
-            reader.onload = (e) => {
-                try {
-                    const csvContent = e.target.result;
-                    this.csvData = this.parseCSV(csvContent);
-                    
-                    if (this.csvData.length === 0) {
-                        this.mostrarNotificacion('El archivo CSV está vacío o tiene formato incorrecto', 'warning');
-                        return;
-                    }
-
-                    this.mostrarVistaPreviaCSV();
-                    this.mostrarNotificacion(`CSV cargado: ${this.csvData.length} libros encontrados`, 'success');
-                } catch (error) {
-                    this.mostrarNotificacion(`Error: ${error.message}`, 'error');
-                } finally {
-                    uploadArea.innerHTML = originalHTML;
-                    uploadArea.style.pointerEvents = 'auto';
-                }
-            };
-
-            reader.onerror = () => {
-                this.mostrarNotificacion('Error al leer el archivo', 'error');
-                uploadArea.innerHTML = originalHTML;
-                uploadArea.style.pointerEvents = 'auto';
-            };
-
-            reader.readAsText(file);
-        }
-
-        parseCSV(csvText) {
-            const lines = csvText.split('\n').filter(line => line.trim() !== '');
-            if (lines.length < 2) return [];
-
-            const firstLine = lines[0];
-            const delimiter = firstLine.includes(';') ? ';' : ',';
-            const headers = firstLine.split(delimiter).map(h => h.trim().toLowerCase());
-            
-            const autorIndex = headers.findIndex(h => h.includes('autor'));
-            const tituloIndex = headers.findIndex(h => h.includes('titulo') || h.includes('título'));
-
-            if (autorIndex === -1 || tituloIndex === -1) {
-                throw new Error('El CSV debe tener columnas "autor" y "titulo"');
-            }
-
-            const data = [];
-            for (let i = 1; i < lines.length; i++) {
-                const line = lines[i];
-                // Manejar comas dentro de comillas
-                const cells = [];
-                let inQuotes = false;
-                let currentCell = '';
-                
-                for (let j = 0; j < line.length; j++) {
-                    const char = line[j];
-                    const nextChar = line[j + 1];
-                    
-                    if (char === '"') {
-                        inQuotes = !inQuotes;
-                    } else if (char === delimiter && !inQuotes) {
-                        cells.push(currentCell.trim().replace(/^"|"$/g, ''));
-                        currentCell = '';
-                    } else {
-                        currentCell += char;
-                    }
-                }
-                cells.push(currentCell.trim().replace(/^"|"$/g, ''));
-                
-                if (cells.length > Math.max(autorIndex, tituloIndex)) {
-                    const autor = cells[autorIndex] || 'Autor Desconocido';
-                    const titulo = cells[tituloIndex];
-                    
-                    if (titulo && titulo.trim() !== '') {
-                        data.push({
-                            autor: autor,
-                            titulo: titulo,
-                            originalLine: i + 1
-                        });
-                    }
-                }
-            }
-
-            return data;
-        }
-
-        mostrarVistaPreviaCSV() {
-            const previewBody = document.getElementById('previewTableBody');
-            previewBody.innerHTML = '';
-
-            const previewData = this.csvData.slice(0, 15);
-            previewData.forEach(row => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${this.escapeHtml(row.autor)}</td>
-                    <td>${this.escapeHtml(row.titulo)}</td>
-                `;
-                previewBody.appendChild(tr);
-            });
-
-            if (this.csvData.length > 15) {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td colspan="2" style="text-align: center; padding: 20px; color: var(--gray); font-style: italic; background: var(--light);">
-                        ... y ${this.csvData.length - 15} libros más
-                    </td>
-                `;
-                previewBody.appendChild(tr);
-            }
-
-            document.getElementById('csvPreview').classList.remove('hidden');
-            
-            // Scroll suave a la vista previa
-            document.getElementById('csvPreview').scrollIntoView({ 
-                behavior: 'smooth', 
-                block: 'nearest' 
-            });
-        }
-
-        escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
-
-        async procesarTodoCSV() {
-            if (this.csvData.length === 0) {
-                this.mostrarNotificacion('No hay datos CSV para procesar', 'warning');
-                return;
-            }
-
-            if (!confirm(`¿Procesar ${this.csvData.length} libros del CSV?`)) {
-                return;
-            }
-
-            this.mostrarBarraProgreso();
-            const totalLibros = this.csvData.length;
-            let procesados = 0, exitosos = 0, errores = 0;
-
-            for (const libroData of this.csvData) {
-                try {
-                    await this.procesarLibroCSV(libroData);
-                    exitosos++;
-                } catch (error) {
-                    console.error('Error procesando libro:', libroData, error);
-                    errores++;
-                }
-
-                procesados++;
-                this.actualizarBarraProgreso(procesados, totalLibros, exitosos, errores);
-                
-                // Pequeña pausa para no saturar
-                await new Promise(resolve => setTimeout(resolve, 150));
-            }
-
-            this.ocultarBarraProgreso();
-            
-            // Mostrar resumen
-            const mensaje = `Procesamiento completado:\n✅ ${exitosos} exitosos\n❌ ${errores} errores`;
-            if (errores > 0) {
-                this.mostrarNotificacion(mensaje, errores === totalLibros ? 'error' : 'warning');
-            } else {
-                this.mostrarNotificacion(mensaje, 'success');
-            }
-        }
-
-        async procesarLibroCSV(libroData) {
-            return new Promise((resolve) => {
-                setTimeout(() => {
-                    this.buscarLibro(libroData.titulo, libroData.autor, 'completa');
-                    resolve();
-                }, 0);
-            });
-        }
-
-        mostrarBarraProgreso() {
-            const container = document.getElementById('progressContainer');
-            container.classList.remove('hidden');
-            container.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }
-
-        actualizarBarraProgreso(procesados, total, exitosos, errores) {
-            const porcentaje = (procesados / total) * 100;
-            
-            document.getElementById('progressFill').style.width = `${porcentaje}%`;
-            document.getElementById('progressText').textContent = 
-                `${procesados}/${total} libros (${Math.round(porcentaje)}%)`;
-            document.getElementById('processedCount').textContent = procesados;
-            document.getElementById('successCount').textContent = exitosos;
-            document.getElementById('errorCount').textContent = errores;
-        }
-
-        ocultarBarraProgreso() {
-            setTimeout(() => {
-                document.getElementById('progressContainer').classList.add('hidden');
-            }, 1000);
-        }
-
-        cancelarProcesamientoCSV() {
-            this.csvData = [];
-            document.getElementById('csvPreview').classList.add('hidden');
-            document.getElementById('csvFileInput').value = '';
-            this.mostrarNotificacion('Procesamiento cancelado', 'info');
-        }
-
-        descargarTemplateCSV() {
-            const template = `autor,titulo
-Gabriel Garcia Marquez,Cien años de soledad
-Jane Austen,Orgullo y prejuicio
-George Orwell,1984
-J.K. Rowling,Harry Potter y la piedra filosofal
-Miguel de Cervantes,Don Quijote de la Mancha
-Isabel Allende,La casa de los espíritus
-Mario Vargas Llosa,La ciudad y los perros
-Julio Cortázar,Rayuela
-Pablo Neruda,Veinte poemas de amor y una canción desesperada
-Stephen King,El resplandor`;
-
-            const blob = new Blob([template], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'plantilla_libros.csv';
-            a.click();
-            URL.revokeObjectURL(url);
-            
-            this.mostrarNotificacion('Plantilla descargada', 'success');
-        }
-
-        limpiarBusquedas() {
-            if (this.libros.length === 0) {
-                this.mostrarNotificacion('No hay búsquedas para limpiar', 'info');
-                return;
-            }
-
-            const descargados = Object.keys(this.librosDescargados).length;
-            const noEncontrados = Object.keys(this.librosNoEncontrados).length;
-            
-            if (confirm(`¿Limpiar ${this.libros.length} libros?
-• ${descargados} marcados como descargados
-• ${noEncontrados} marcados como no encontrados
-
-Esta acción no se puede deshacer.`)) {
-                this.libros = [];
-                this.librosDescargados = {};
-                this.librosNoEncontrados = {};
-                this.mostrarLibros();
-                this.actualizarEstadisticas();
-                this.actualizarContadores();
-                this.guardarDatos();
-                
-                this.mostrarNotificacion('Todas las búsquedas han sido limpiadas', 'success');
-            }
-        }
-
         generarEnlaces(titulo, autor) {
             const query = `${titulo} ${autor}`.trim();
             const queryEncoded = encodeURIComponent(query);
-            const querySimple = query.replace(/\s+/g, '+');
-            const queryZlib = query.toLowerCase().replace(/\s+/g, '%20');
-
+            
             return {
-                // Z-LIBRARY Y DESCARGAS
-                'Z-Library': `https://z-library.ec/s/${queryZlib}`,
+                'Z-Library': `https://z-library.ec/s/${query.toLowerCase().replace(/\s+/g, '%20')}`,
                 'LibGen': `https://libgen.is/search.php?req=${queryEncoded}`,
-                'WeLib': `https://welib.org/search?q=${querySimple}`,
-                
-                // NUEVOS ENLACES SOLICITADOS
-                'AudioBookBay': `https://audiobookbay.lu/?s=${querySimple}&cat=undefined%2Cund`,
-                'FullLengthAudiobooks': `https://fulllengthaudiobooks.net/?s=${querySimple}`,
-                'Liber3': `https://liber3.eth.limo/#/search?q=${queryEncoded}`,
-                'Tokybook': `https://tokybook.com/search?q=${queryEncoded}`,
-                
-                // AUDIOLIBROS GRATUITOS
-                'Librivox': `https://librivox.org/search?q=${queryEncoded}`,
-                'Internet Archive Audio': `https://archive.org/search.php?query=${queryEncoded}+audio`,
-                'Open Library Audio': `https://openlibrary.org/search?q=${queryEncoded}&has_fulltext=true`,
-                'Loyal Books': `https://www.loyalbooks.com/search/?q=${queryEncoded}`,
-                
-                // AUDIOLIBROS COMERCIALES
                 'Audible': `https://www.audible.com/search?keywords=${queryEncoded}`,
-                'Google Play Audiobooks': `https://play.google.com/store/search?q=${queryEncoded}&c=books`,
-                'Apple Audiobooks': `https://books.apple.com/us/search?term=${queryEncoded}`,
-                'Storytel': `https://www.storytel.com/search?q=${queryEncoded}`,
-                
-                // VIDEO Y STREAMING
-                'YouTube Audiolibros': `https://www.youtube.com/results?search_query=${queryEncoded}+audiolibro+completo`,
-                'Spotify Audiobooks': `https://open.spotify.com/search/${queryEncoded}`,
-                
-                // TORRENTS
-                '1337x Audio': `https://1337x.to/search/${queryEncoded}+audiobook/1/`,
-                'The Pirate Bay Audio': `https://thepiratebay.org/search.php?q=${queryEncoded}`,
-                
-                // PLATAFORMAS DE LIBROS
-                'Amazon': `https://www.amazon.com/s?k=${queryEncoded}`,
+                'YouTube': `https://www.youtube.com/results?search_query=${queryEncoded}+audiolibro`,
+                'Internet Archive': `https://archive.org/search.php?query=${queryEncoded}+audio`,
+                'Librivox': `https://librivox.org/search?q=${queryEncoded}`,
                 'Google Books': `https://www.google.com/search?q=${queryEncoded}+libro`,
-                
-                // OTROS
-                'Project Gutenberg': `https://www.gutenberg.org/ebooks/search/?query=${queryEncoded}`,
-                'ManyBooks': `https://manybooks.net/search-book?search=${querySimple}`,
-                'BookBub': `https://www.bookbub.com/search?search=${queryEncoded}`,
-                'Goodreads': `https://www.goodreads.com/search?q=${queryEncoded}`,
-                'Scribd': `https://www.scribd.com/search?query=${queryEncoded}`,
-                'OverDrive': `https://www.overdrive.com/search?q=${queryEncoded}`
+                'Amazon': `https://www.amazon.com/s?k=${queryEncoded}`
             };
         }
 
@@ -2016,56 +2676,25 @@ Esta acción no se puede deshacer.`)) {
             const urlLower = url.toLowerCase();
 
             if (urlLower.includes('audio') || urlLower.includes('audiolibro') || 
-                plataformaLower.includes('audio') || plataformaLower.includes('audiobook')) {
+                plataformaLower.includes('audio')) {
                 tipo = 'AUDIOLIBRO';
             }
-            if (urlLower.includes('z-library') || urlLower.includes('libgen') || 
-                urlLower.includes('download') || urlLower.includes('welib')) {
+            if (urlLower.includes('z-library') || urlLower.includes('libgen')) {
                 tipo = 'DESCARGA';
             }
-            if (urlLower.includes('torrent') || plataformaLower.includes('1337x') || 
-                plataformaLower.includes('pirate')) {
-                tipo = 'TORRENT';
-            }
-            if (urlLower.includes('amazon') || urlLower.includes('audible') || 
-                urlLower.includes('googleplay') || urlLower.includes('apple') ||
-                urlLower.includes('comprar') || urlLower.includes('buy')) {
-                tipo = 'COMPRA';
-            }
-
-            if (urlLower.includes('.mp3') || urlLower.includes('.m4b') || 
-                urlLower.includes('.wav') || urlLower.includes('direct')) {
-                esDirecto = true;
+            if (urlLower.includes('youtube')) {
+                tipo = 'VIDEO';
             }
 
             const iconos = {
-                // Z-Library y descargas
-                'Z-Library': '📥', 'LibGen': '📚', 'WeLib': '📖',
-                
-                // Nuevos enlaces
-                'Liber3': '🔍', 'AudioBookBay': '🎧', 
-                'FullLengthAudiobooks': '🎵', 'Tokybook': '🇯🇵',
-                
-                // Audiolibros gratuitos
-                'Librivox': '🆓', 'Internet Archive Audio': '🏛️', 
-                'Open Library Audio': '📖', 'Loyal Books': '📚',
-                'Project Gutenberg': '📜',
-                
-                // Audiolibros comerciales
-                'Audible': '🔊', 'Google Play Audiobooks': '📱', 
-                'Apple Audiobooks': '🍎', 'Storytel': '🎭',
-                
-                // Video y streaming
-                'YouTube Audiolibros': '🎥', 'Spotify Audiobooks': '🎵',
-                
-                // Torrents
-                '1337x Audio': '🧲', 'The Pirate Bay Audio': '🏴‍☠️',
-                
-                // Plataformas de libros
-                'Amazon': '🛒', 'Google Books': '🔍',
-                'ManyBooks': '📚', 'BookBub': '📖',
-                'Goodreads': '⭐', 'Scribd': '📄',
-                'OverDrive': '📲'
+                'Z-Library': '📥',
+                'LibGen': '📚',
+                'Audible': '🔊',
+                'YouTube': '🎥',
+                'Internet Archive': '🏛️',
+                'Librivox': '🆓',
+                'Google Books': '🔍',
+                'Amazon': '🛒'
             };
 
             icono = iconos[plataforma] || '🔗';
@@ -2073,510 +2702,70 @@ Esta acción no se puede deshacer.`)) {
             return { tipo, icono, esDirecto };
         }
 
-        buscarLibro(titulo, autor, tipoBusqueda = 'completa') {
-            if (!titulo.trim()) {
-                this.mostrarNotificacion('Por favor ingresa al menos el título del libro', 'warning');
-                document.getElementById('tituloInput').focus();
-                return;
-            }
-
-            if (!autor.trim()) {
-                autor = 'Autor Desconocido';
-            }
-
-            // Verificar si ya existe un libro similar
-            const libroExistente = this.libros.find(libro => 
-                libro.titulo.toLowerCase() === titulo.toLowerCase() && 
-                libro.autor.toLowerCase() === autor.toLowerCase()
-            );
-
-            const libroId = libroExistente ? libroExistente.id : `libro_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
-            // Crear o actualizar libro
-            const libro = {
-                id: libroId,
-                titulo: titulo.trim(),
-                autor: autor.trim(),
-                esEducativo: this.esEducativo(titulo) ? 'Sí' : 'No',
-                prioridadAudio: this.esEducativo(titulo) ? 'MEDIA' : 'ALTA',
-                enlaces: [],
-                fechaBusqueda: new Date().toISOString(),
-                timestamp: Date.now()
-            };
-
-            const todosEnlaces = this.generarEnlaces(titulo, autor);
-            let enlacesFiltrados = 0;
-            
-            Object.entries(todosEnlaces).forEach(([plataforma, url]) => {
-                const analisis = this.analizarEnlace(plataforma, url);
-                
-                // Filtrar según tipo de búsqueda
-                let incluir = true;
-                if (tipoBusqueda === 'audiolibros') {
-                    incluir = ['AUDIOLIBRO', 'TORRENT'].includes(analisis.tipo);
-                } else if (tipoBusqueda === 'torrents') {
-                    incluir = analisis.tipo === 'TORRENT';
-                } else if (tipoBusqueda === 'descargas') {
-                    incluir = ['DESCARGA', 'TORRENT'].includes(analisis.tipo);
-                }
-
-                if (incluir) {
-                    libro.enlaces.push({
-                        plataforma: plataforma,
-                        url: url,
-                        tipo: analisis.tipo,
-                        icono: analisis.icono,
-                        esDirecto: analisis.esDirecto
-                    });
-                    enlacesFiltrados++;
-                }
-            });
-
-            // NUEVA LÓGICA: Marcar automáticamente como no encontrado si no hay enlaces
-            if (enlacesFiltrados === 0) {
-                // Solo marcar como no encontrado si no hay ningún enlace válido
-                this.librosNoEncontrados[libroId] = {
-                    fecha: new Date().toISOString(),
-                    razon: 'No se encontraron enlaces válidos en la búsqueda'
-                };
-                
-                // Asegurarse de que no esté marcado como descargado
-                delete this.librosDescargados[libroId];
-                
-                // Mostrar notificación específica
-                this.mostrarNotificacion(
-                    `"${titulo}" - No se encontraron enlaces válidos. Marcado como "No Encontrado".`, 
-                    'warning'
-                );
-            } else {
-                // Si hay enlaces, asegurarse de quitar el marcador de no encontrado
-                delete this.librosNoEncontrados[libroId];
-            }
-
-            // Manejar libro existente o nuevo
-            if (libroExistente) {
-                // Eliminar el libro existente del array
-                this.libros = this.libros.filter(l => l.id !== libroExistente.id);
-                
-                // Preservar los marcadores previos SOLO si no se reemplazan
-                if (enlacesFiltrados === 0) {
-                    // Mantener los marcadores previos para no encontrados
-                    const eraNoEncontrado = this.librosNoEncontrados[libroExistente.id];
-                    if (eraNoEncontrado) {
-                        this.librosNoEncontrados[libroId] = {
-                            fecha: eraNoEncontrado.fecha || new Date().toISOString(),
-                            razon: eraNoEncontrado.razon || 'Preservado de búsqueda anterior'
-                        };
-                    }
-                }
-                
-                // Preservar marcador de descargado si existe y no se está marcando como no encontrado
-                if (this.librosDescargados[libroExistente.id] && enlacesFiltrados > 0) {
-                    this.librosDescargados[libroId] = true;
-                }
-                
-                // Limpiar marcadores del libro antiguo
-                delete this.librosDescargados[libroExistente.id];
-                delete this.librosNoEncontrados[libroExistente.id];
-            }
-
-            // Agregar el libro al array
-            this.libros.unshift(libro);
-            
-            // Guardar y mostrar
-            this.guardarDatos();
-            this.mostrarLibros();
-            this.actualizarEstadisticas();
-            this.actualizarContadores();
-
-            // Limpiar formulario
-            document.getElementById('tituloInput').value = '';
-            document.getElementById('autorInput').value = '';
-            document.getElementById('tituloInput').focus();
-
-            // Mostrar notificación final
-            if (enlacesFiltrados > 0) {
-                const mensaje = tipoBusqueda === 'completa' 
-                    ? `"${titulo}" - ${enlacesFiltrados} enlaces encontrados`
-                    : `"${titulo}" - ${enlacesFiltrados} enlaces de ${tipoBusqueda}`;
-                this.mostrarNotificacion(mensaje, 'success');
-            }
-        }
-
-        mostrarLibros() {
-            const grid = document.getElementById('booksGrid');
-            
-            if (this.libros.length === 0) {
-                grid.innerHTML = `
-                    <div class="welcome-message">
-                        <h3><span>👋</span> ¡Comienza a buscar audiolibros!</h3>
-                        <p>Usa el formulario de arriba para buscar libros individualmente o sube un archivo CSV con tu lista completa.</p>
-                        <p><strong>Ejemplo de búsqueda:</strong> "Cien años de soledad" de "Gabriel García Márquez"</p>
-                        <div style="margin-top: 30px; padding: 20px; background: rgba(52, 152, 219, 0.1); border-radius: 12px;">
-                            <p style="color: var(--dark); margin-bottom: 10px;"><strong>💡 Características:</strong></p>
-                            <ul style="text-align: left; max-width: 600px; margin: 0 auto; color: var(--gray);">
-                                <li>🔍 Búsqueda en más de 30 plataformas</li>
-                                <li>💾 Guardado automático en tu navegador</li>
-                                <li>📱 Compatible con móviles y tablets</li>
-                                <li>📤 Exporta e importa tus datos</li>
-                                <li>✓ Marca libros como descargados o no encontrados</li>
-                            </ul>
-                        </div>
-                    </div>
-                `;
-                return;
-            }
-
-            // Ordenar libros: primero los no encontrados, luego los no descargados, luego los descargados
-            const librosOrdenados = [...this.libros].sort((a, b) => {
-                const aNoEncontrado = this.librosNoEncontrados[a.id] || false;
-                const bNoEncontrado = this.librosNoEncontrados[b.id] || false;
-                const aDescargado = this.librosDescargados[a.id] || false;
-                const bDescargado = this.librosDescargados[b.id] || false;
-                
-                // Primero los no encontrados
-                if (aNoEncontrado && !bNoEncontrado) return -1;
-                if (!aNoEncontrado && bNoEncontrado) return 1;
-                
-                // Luego los no descargados
-                if (!aDescargado && bDescargado) return -1;
-                if (aDescargado && !bDescargado) return 1;
-                
-                // Finalmente por fecha
-                return b.timestamp - a.timestamp;
-            });
-
-            grid.innerHTML = librosOrdenados.map(libro => this.crearTarjetaLibro(libro)).join('');
-            this.aplicarMarcadoresGuardados();
-        }
-
-        crearTarjetaLibro(libro) {
-            const torrentCount = libro.enlaces.filter(e => e.tipo === 'TORRENT').length;
-            const directoCount = libro.enlaces.filter(e => e.esDirecto).length;
-            const audioCount = libro.enlaces.filter(e => e.tipo === 'AUDIOLIBRO').length;
-            const fecha = new Date(libro.fechaBusqueda).toLocaleDateString('es-ES', {
-                day: '2-digit',
-                month: 'short',
-                year: 'numeric'
-            });
-            const esDescargado = this.librosDescargados[libro.id];
-            const esNoEncontrado = this.librosNoEncontrados[libro.id];
-
-            return `
-                <div class="book-card ${esDescargado ? 'descargado' : ''} ${esNoEncontrado ? 'no-encontrado' : ''}" id="card_${libro.id}">
-                    <div class="checkbox-container">
-                        <div class="checkbox-group descargado">
-                            <input type="checkbox" id="check_descargado_${libro.id}" class="descargado-checkbox" 
-                                   onchange="buscador.actualizarMarcador('descargado', this)" 
-                                   ${esDescargado ? 'checked' : ''} 
-                                   ${esNoEncontrado ? 'disabled' : ''}>
-                            <label for="check_descargado_${libro.id}" title="Marcar como descargado">
-                                <span style="font-size: 1.2em;">✓</span>
-                                <span style="font-size: 0.8em;">Descargado</span>
-                            </label>
-                        </div>
-                        
-                        <div class="checkbox-group no-encontrado">
-                            <input type="checkbox" id="check_noencontrado_${libro.id}" class="no-encontrado-checkbox" 
-                                   onchange="buscador.actualizarMarcador('no-encontrado', this)" 
-                                   ${esNoEncontrado ? 'checked' : ''} 
-                                   ${esDescargado ? 'disabled' : ''}>
-                            <label for="check_noencontrado_${libro.id}" title="Marcar como no encontrado">
-                                <span style="font-size: 1.2em;">✗</span>
-                                <span style="font-size: 0.8em;">No Encontrado</span>
-                            </label>
-                        </div>
-                    </div>
-                    
-                    <div class="book-header">
-                        <div class="book-title">${this.escapeHtml(libro.titulo)}</div>
-                        <div class="book-author">${this.escapeHtml(libro.autor)}</div>
-                        <small class="fecha-busqueda">Búsqueda: ${fecha}</small>
-                    </div>
-                    
-                    <div class="book-meta">
-                        <span class="badge ${libro.prioridadAudio === 'ALTA' ? 'badge-audio' : 'badge-educativo'}">
-                            ${libro.prioridadAudio === 'ALTA' ? '🎧' : '📚'} ${libro.prioridadAudio}
-                        </span>
-                        <span class="badge ${libro.esEducativo === 'Sí' ? 'badge-educativo' : 'badge-descarga'}">
-                            📚 ${libro.esEducativo}
-                        </span>
-                        ${torrentCount > 0 ? `<span class="badge badge-torrent">🧲 ${torrentCount} torrents</span>` : ''}
-                        ${directoCount > 0 ? `<span class="badge badge-directo">📥 ${directoCount} directos</span>` : ''}
-                        ${audioCount > 0 ? `<span class="badge badge-audio">🎧 ${audioCount} audiolibros</span>` : ''}
-                        ${esNoEncontrado ? `<span class="badge badge-no-encontrado">✗ No Encontrado</span>` : ''}
-                    </div>
-                    
-                    <div class="links-section">
-                        <div class="platform-links">
-                            ${libro.enlaces.length > 0 ? libro.enlaces.map(enlace => `
-                                <a href="${enlace.url}" target="_blank" rel="noopener noreferrer" 
-                                   class="link-item ${enlace.tipo.toLowerCase()}"
-                                   title="${enlace.plataforma} - ${enlace.url}">
-                                    <span class="link-icon">${enlace.icono}</span>
-                                    <div class="link-content">
-                                        <span class="link-text">${enlace.plataforma}</span>
-                                        <span class="link-url">${this.acortarURL(enlace.url)}</span>
-                                    </div>
-                                    <span class="link-type">${enlace.tipo}</span>
-                                </a>
-                            `).join('') : '<div class="no-enlaces-mensaje">No se encontraron enlaces para este libro</div>'}
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-
-        acortarURL(url, maxLength = 50) {
-            if (url.length <= maxLength) return url;
-            return url.substring(0, maxLength) + '...';
-        }
-
-
-            actualizarMarcador(tipo, checkbox) {
-        const card = checkbox.closest('.book-card');
-        
-        // CORRECCIÓN: Extraer correctamente el ID del libro
-        // El ID del checkbox es: "check_noencontrado_libro_1765122560684_sce2pfmbw"
-        // Necesitamos: "libro_1765122560684_sce2pfmbw"
-        const checkboxId = checkbox.id;
-        
-        // Extraer el ID del libro correctamente
-        let libroId;
-        if (tipo === 'descargado') {
-            libroId = checkboxId.replace('check_descargado_', '');
-        } else if (tipo === 'no-encontrado') {
-            libroId = checkboxId.replace('check_noencontrado_', '');
-        }
-        
-        console.log('Actualizando marcador:', { tipo, checkboxId, libroId });
-        
-        const descargadoCheckbox = document.getElementById(`check_descargado_${libroId}`);
-        const noEncontradoCheckbox = document.getElementById(`check_noencontrado_${libroId}`);
-        
-        if (tipo === 'descargado') {
-            if (checkbox.checked) {
-                // Marcar como descargado
-                card.classList.add('descargado');
-                this.librosDescargados[libroId] = true;
-                
-                // Deshabilitar y desmarcar el otro checkbox
-                if (noEncontradoCheckbox) {
-                    noEncontradoCheckbox.checked = false;
-                    noEncontradoCheckbox.disabled = true;
-                }
-                
-                // Limpiar marcador de no encontrado
-                card.classList.remove('no-encontrado');
-                delete this.librosNoEncontrados[libroId];
-                
-                this.mostrarNotificacion('Libro marcado como descargado', 'success');
-                
-                // Ordenar libros para que los descargados vayan al final
-                this.ordenarLibros();
-                
-            }
-            else {
-                // Desmarcar como descargado
-                card.classList.remove('descargado');
-                delete this.librosDescargados[libroId];
-                
-                // Habilitar el otro checkbox
-                if (noEncontradoCheckbox) {
-                    noEncontradoCheckbox.disabled = false;
-                }
-                
-                this.mostrarNotificacion('Marcador de descargado eliminado', 'info');
-                
-                // Ordenar libros para que vuelva a su posición original
-                this.ordenarLibros();
-            }
-        } else if (tipo === 'no-encontrado') {
-            if (checkbox.checked) {
-                // Marcar como no encontrado - usando estructura de objeto
-                card.classList.add('no-encontrado');
-                this.librosNoEncontrados[libroId] = {
-                    fecha: new Date().toISOString(),
-                    razon: 'Marcado manualmente por el usuario'
-                };
-                
-                // Deshabilitar y desmarcar el otro checkbox
-                if (descargadoCheckbox) {
-                    descargadoCheckbox.checked = false;
-                    descargadoCheckbox.disabled = true;
-                }
-                
-                // Limpiar marcador de descargado
-                card.classList.remove('descargado');
-                delete this.librosDescargados[libroId];
-                
-                this.mostrarNotificacion('Libro marcado como no encontrado', 'warning');
-            } else {
-                // Desmarcar como no encontrado
-                card.classList.remove('no-encontrado');
-                delete this.librosNoEncontrados[libroId];
-                
-                // Habilitar el otro checkbox
-                if (descargadoCheckbox) {
-                    descargadoCheckbox.disabled = false;
-                }
-                
-                this.mostrarNotificacion('Marcador de no encontrado eliminado', 'info');
-            }
-        }
-        
-        this.guardarDatos();
-        this.actualizarContadores();
-        this.actualizarEstadisticas();
-    }
-
-        ordenarLibros() {
-            // Ordenar libros: primero los no encontrados, luego los no descargados, luego los descargados
-            this.libros.sort((a, b) => {
-                const aNoEncontrado = this.librosNoEncontrados[a.id] || false;
-                const bNoEncontrado = this.librosNoEncontrados[b.id] || false;
-                const aDescargado = this.librosDescargados[a.id] || false;
-                const bDescargado = this.librosDescargados[b.id] || false;
-                
-                // Primero los no encontrados
-                if (aNoEncontrado && !bNoEncontrado) return -1;
-                if (!aNoEncontrado && bNoEncontrado) return 1;
-                
-                // Luego los no descargados
-                if (!aDescargado && bDescargado) return -1;
-                if (aDescargado && !bDescargado) return 1;
-                
-                // Finalmente por fecha
-                return b.timestamp - a.timestamp;
-            });
-            
-            this.mostrarLibros();
-        }
-
-     aplicarMarcadoresGuardados() {
-        Object.keys(this.librosDescargados).forEach(libroId => {
-            const checkbox = document.getElementById('check_descargado_' + libroId);
-            const otroCheckbox = document.getElementById('check_noencontrado_' + libroId);
-            if (checkbox) {
-                checkbox.checked = true;
-                if (checkbox.closest('.book-card')) {
-                    checkbox.closest('.book-card').classList.add('descargado');
-                }
-                if (otroCheckbox) otroCheckbox.disabled = true;
-            }
-        });
-        
-        Object.keys(this.librosNoEncontrados).forEach(libroId => {
-            const checkbox = document.getElementById('check_noencontrado_' + libroId);
-            const otroCheckbox = document.getElementById('check_descargado_' + libroId);
-            if (checkbox) {
-                checkbox.checked = true;
-                if (checkbox.closest('.book-card')) {
-                    checkbox.closest('.book-card').classList.add('no-encontrado');
-                }
-                if (otroCheckbox) otroCheckbox.disabled = true;
-            }
-            });
-        }
-        actualizarContadores() {
-            const countDescargados = Object.keys(this.librosDescargados).length;
-            const countNoEncontrados = Object.keys(this.librosNoEncontrados).length;
-            
-            document.getElementById('contador-descargados').textContent = 
-                `${countDescargados} descargado${countDescargados !== 1 ? 's' : ''}`;
-            document.getElementById('contador-no-encontrados').textContent = 
-                `${countNoEncontrados} no encontrado${countNoEncontrados !== 1 ? 's' : ''}`;
-        }
-
-        filterBooks(filter) {
-            const cards = document.querySelectorAll('.book-card');
-            const buttons = document.querySelectorAll('.filter-btn');
-            
-            buttons.forEach(btn => {
-                btn.classList.remove('active');
-                if (btn.textContent.toLowerCase().includes(filter)) {
-                    btn.classList.add('active');
-                }
-            });
-            
-            cards.forEach(card => {
-                let mostrar = true;
-                
-                switch(filter) {
-                    case 'all':
-                        mostrar = true;
-                        break;
-                    case 'audio':
-                        mostrar = card.querySelector('.link-item.audio') !== null;
-                        break;
-                    case 'torrent':
-                        mostrar = card.querySelector('.link-item.torrent') !== null;
-                        break;
-                    case 'descarga':
-                        mostrar = card.querySelector('.link-item.directo') !== null;
-                        break;
-                    case 'descargados':
-                        mostrar = card.classList.contains('descargado');
-                        break;
-                    case 'no-encontrados':
-                        mostrar = card.classList.contains('no-encontrado');
-                        break;
-                }
-                
-                card.style.display = mostrar ? 'block' : 'none';
-                if (mostrar) {
-                    card.style.animation = 'fadeIn 0.3s ease';
-                }
-            });
-            
-            // Mostrar mensaje si no hay resultados
-            const visibleCards = Array.from(cards).filter(card => card.style.display !== 'none');
-            if (visibleCards.length === 0 && this.libros.length > 0) {
-                const grid = document.getElementById('booksGrid');
-                const mensaje = document.createElement('div');
-                mensaje.className = 'welcome-message';
-                mensaje.innerHTML = `
-                    <h3><span>🔍</span> No se encontraron resultados</h3>
-                    <p>No hay libros que coincidan con el filtro "${filter}".</p>
-                    <button onclick="filterBooks('all')" style="
-                        margin-top: 20px;
-                        padding: 12px 24px;
-                        background: var(--primary);
-                        color: white;
-                        border: none;
-                        border-radius: 50px;
-                        cursor: pointer;
-                        font-weight: 500;
-                    ">Ver todos los libros</button>
-                `;
-                grid.innerHTML = '';
-                grid.appendChild(mensaje);
-            }
-        }
-
-        actualizarEstadisticas() {
-            const totalLibros = this.libros.length;
-            const totalEnlaces = this.libros.reduce((sum, libro) => sum + libro.enlaces.length, 0);
-            const descargadosCount = Object.keys(this.librosDescargados).length;
-            const noEncontradosCount = Object.keys(this.librosNoEncontrados).length;
-
-            document.getElementById('totalLibros').textContent = totalLibros.toLocaleString();
-            document.getElementById('totalEnlaces').textContent = totalEnlaces.toLocaleString();
-            document.getElementById('descargadosCount').textContent = descargadosCount.toLocaleString();
-            document.getElementById('noEncontradosCount').textContent = noEncontradosCount.toLocaleString();
-        }
-
         esEducativo(titulo) {
+            if (!titulo) return false;
             const palabrasEducativas = [
                 'educación', 'educativo', 'educativa', 'enseñanza', 'pedagogía',
                 'didáctica', 'curso', 'manual', 'guía', 'aprendizaje', 'texto',
-                'escolar', 'académico', 'universidad', 'aprende', 'enseña',
-                'pedagógico', 'didáctico', 'formación', 'instrucción'
+                'escolar', 'académico', 'universidad', 'aprende', 'enseña'
             ];
             const tituloLower = titulo.toLowerCase();
             return palabrasEducativas.some(palabra => tituloLower.includes(palabra));
         }
 
+        filterBooks(filter) {
+            this.filtroActivo = filter;
+            
+            const buttons = document.querySelectorAll('.filter-btn');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            
+            // Marcar botón activo
+            const activeBtn = Array.from(buttons).find(btn => 
+                btn.textContent.toLowerCase().includes(filter) && !btn.classList.contains('tag-filter-btn')
+            );
+            if (activeBtn) {
+                activeBtn.classList.add('active');
+            }
+            
+            // Aplicar filtro combinado
+            this.aplicarFiltrosActuales();
+        }
+
+        limpiarBusquedas() {
+            if (this.libros.length === 0) {
+                this.mostrarNotificacion('No hay búsquedas para limpiar', 'info');
+                return;
+            }
+
+            const descargados = Object.keys(this.librosDescargados).length;
+            const noEncontrados = Object.keys(this.librosNoEncontrados).length;
+            const etiquetasPersonales = this.etiquetasPersonalizadas.length;
+            const librosEtiquetados = Object.keys(this.librosEtiquetas).length;
+            
+            const mensaje = `¿Limpiar ${this.libros.length} libros?\n\n` +
+                `Incluye:\n` +
+                `• ${descargados} marcados como descargados\n` +
+                `• ${noEncontrados} marcados como no encontrados\n` +
+                `• ${etiquetasPersonales} etiquetas personalizadas\n` +
+                `• ${librosEtiquetados} libros con etiquetas\n\n` +
+                `Esta acción no se puede deshacer.`;
+            
+            if (confirm(mensaje)) {
+                this.libros = [];
+                this.librosDescargados = {};
+                this.librosNoEncontrados = {};
+                this.etiquetasPersonalizadas = [];
+                this.librosEtiquetas = {};
+                this.borrarFiltros();
+                this.actualizarEstadisticas();
+                this.actualizarContadores();
+                this.actualizarFiltrosEtiquetas();
+                this.guardarDatos();
+                
+                this.mostrarNotificacion('Todos los datos han sido limpiados', 'success');
+            }
+        }
+        
         exportarLista() {
             if (this.libros.length === 0) {
                 this.mostrarNotificacion('No hay libros para exportar', 'warning');
@@ -2584,7 +2773,8 @@ Esta acción no se puede deshacer.`)) {
             }
 
             let contenido = '═══════════════════════════════════════════════════\n';
-            contenido += '               LISTA DE AUDIOLIBROS BUSCADOS\n';
+            contenido += '        LISTA DE AUDIOLIBROS BUSCADOS\n';
+            contenido += '        (CON ETIQUETAS PERSONALIZADAS)\n';
             contenido += '═══════════════════════════════════════════════════\n\n';
             contenido += `Fecha de exportación: ${new Date().toLocaleDateString('es-ES', {
                 weekday: 'long',
@@ -2597,51 +2787,60 @@ Esta acción no se puede deshacer.`)) {
             contenido += `Total de libros: ${this.libros.length}\n`;
             contenido += `Libros descargados: ${Object.keys(this.librosDescargados).length}\n`;
             contenido += `Libros no encontrados: ${Object.keys(this.librosNoEncontrados).length}\n`;
-            contenido += '\n═══════════════════════════════════════════════════\n\n';
+            contenido += `Etiquetas personalizadas: ${this.etiquetasPersonalizadas.length}\n`;
+            contenido += `Libros etiquetados: ${Object.keys(this.librosEtiquetas).length}\n`;
+            
+            if (this.etiquetasPersonalizadas.length > 0) {
+                contenido += '\n═══════════════════════════════════════════════════\n';
+                contenido += '            ETIQUETAS PERSONALIZADAS\n';
+                contenido += '═══════════════════════════════════════════════════\n\n';
+                
+                this.etiquetasPersonalizadas.forEach((etiqueta, index) => {
+                    const librosConEstaEtiqueta = Object.keys(this.librosEtiquetas).filter(
+                        libroId => this.librosEtiquetas[libroId].id === etiqueta.id
+                    ).length;
+                    
+                    contenido += `${index + 1}. [■] ${etiqueta.nombre}\n`;
+                    contenido += `   Color: ${etiqueta.color}\n`;
+                    contenido += `   Usada en: ${librosConEstaEtiqueta} libro(s)\n\n`;
+                });
+            }
+            
+            contenido += '\n═══════════════════════════════════════════════════\n';
+            contenido += '                 LISTA DE LIBROS\n';
+            contenido += '═══════════════════════════════════════════════════\n\n';
 
             this.libros.forEach((libro, index) => {
                 const esDescargado = this.librosDescargados[libro.id];
                 const esNoEncontrado = this.librosNoEncontrados[libro.id];
+                const etiqueta = this.librosEtiquetas[libro.id];
                 
-                contenido += `[${index + 1}] ${esDescargado ? '[✓ DESCARGADO] ' : ''}${esNoEncontrado ? '[✗ NO ENCONTRADO] ' : ''}\n`;
+                contenido += `[${index + 1}] `;
+                contenido += esDescargado ? '[✓ DESCARGADO] ' : '';
+                contenido += esNoEncontrado ? '[✗ NO ENCONTRADO] ' : '';
+                contenido += etiqueta ? `[🏷️ ${etiqueta.nombre}] ` : '';
+                contenido += '\n';
+                
                 contenido += `TÍTULO: ${libro.titulo}\n`;
-                contenido += `AUTOR: ${libro.autor}\n`;
-                contenido += `FECHA: ${new Date(libro.fechaBusqueda).toLocaleDateString()}\n`;
+                contenido += `AUTOR: ${libro.autor || 'Autor desconocido'}\n`;
+                contenido += `FECHA: ${new Date(libro.fechaBusqueda || Date.now()).toLocaleDateString()}\n`;
+                
+                if (etiqueta) {
+                    contenido += `ETIQUETA: ${etiqueta.nombre} (Color: ${etiqueta.color})\n`;
+                }
                 
                 if (esNoEncontrado) {
-                    contenido += `ESTADO: ✗ NO ENCONTRADO EN NINGUNA PLATAFORMA\n`;
-                    
-                    // Agregar información adicional si existe
-                    if (typeof esNoEncontrado === 'object' && esNoEncontrado.razon) {
-                        contenido += `RAZÓN: ${esNoEncontrado.razon}\n`;
-                    }
-                    if (typeof esNoEncontrado === 'object' && esNoEncontrado.fecha) {
-                        contenido += `FECHA MARCADO: ${new Date(esNoEncontrado.fecha).toLocaleDateString()}\n`;
-                    }
-                    
-                    contenido += '\n';
+                    contenido += `ESTADO: ✗ NO ENCONTRADO EN NINGUNA PLATAFORMA\n\n`;
                 } else {
-                    contenido += `ENLACES (${libro.enlaces.length}):\n\n`;
+                    contenido += `ENLACES (${libro.enlaces ? libro.enlaces.length : 0}):\n\n`;
                     
-                    if (libro.enlaces.length === 0) {
+                    if (!libro.enlaces || libro.enlaces.length === 0) {
                         contenido += `  No se encontraron enlaces\n\n`;
                     } else {
-                        // Agrupar enlaces por tipo
-                        const enlacesPorTipo = {};
                         libro.enlaces.forEach(enlace => {
-                            if (!enlacesPorTipo[enlace.tipo]) {
-                                enlacesPorTipo[enlace.tipo] = [];
-                            }
-                            enlacesPorTipo[enlace.tipo].push(enlace);
+                            contenido += `  • ${enlace.plataforma}: ${enlace.url}\n`;
                         });
-                        
-                        Object.entries(enlacesPorTipo).forEach(([tipo, enlaces]) => {
-                            contenido += `  ${tipo} (${enlaces.length}):\n`;
-                            enlaces.forEach(enlace => {
-                                contenido += `    • ${enlace.plataforma}: ${enlace.url}\n`;
-                            });
-                            contenido += '\n';
-                        });
+                        contenido += '\n';
                     }
                 }
                 
@@ -2657,60 +2856,48 @@ Esta acción no se puede deshacer.`)) {
             a.click();
             URL.revokeObjectURL(url);
             
-            this.mostrarNotificacion('Lista exportada correctamente', 'success');
-        }
-
-        // Métodos para gestionar específicamente libros no encontrados
-        marcarComoNoEncontrado(id, razon = '') {
-            this.librosNoEncontrados[id] = {
-                fecha: new Date().toISOString(),
-                razon: razon
-            };
-            
-            // Asegurar que no esté marcado como descargado
-            delete this.librosDescargados[id];
-            
-            this.guardarDatos();
-            this.mostrarLibros();
-            this.actualizarContadores();
-            this.actualizarEstadisticas();
-            
-            return true;
-        }
-
-        desmarcarComoNoEncontrado(id) {
-            delete this.librosNoEncontrados[id];
-            this.guardarDatos();
-            this.mostrarLibros();
-            this.actualizarContadores();
-            this.actualizarEstadisticas();
-            
-            return true;
+            this.mostrarNotificacion('Lista exportada con etiquetas personalizadas', 'success');
         }
     }
 
     // Variables globales
     let buscador;
 
-    // Funciones globales
-    function mostrarBusquedaManual() {
-        document.getElementById('busquedaManualPanel').classList.remove('hidden');
-        document.getElementById('subirCSVPanel').classList.add('hidden');
-        document.querySelectorAll('.method-btn').forEach(btn => btn.classList.remove('active'));
-        event.target.classList.add('active');
+    // Función global para borrar filtros
+    function borrarFiltros() {
+        buscador.borrarFiltros();
     }
 
-    function mostrarSubirCSV() {
-        document.getElementById('busquedaManualPanel').classList.add('hidden');
-        document.getElementById('subirCSVPanel').classList.remove('hidden');
+    // Funciones globales para el gestor de etiquetas
+    function mostrarGestorEtiquetas() {
+        buscador.mostrarGestorEtiquetas();
+    }
+
+    function ocultarGestorEtiquetas() {
+        buscador.ocultarGestorEtiquetas();
+    }
+
+    function crearNuevaEtiqueta() {
+        const nombre = document.getElementById('newTagName').value;
+        const color = document.getElementById('colorPicker').value;
+        
+        const nuevaEtiqueta = buscador.crearEtiquetaPersonalizada(nombre, color);
+        if (nuevaEtiqueta) {
+            document.getElementById('newTagName').value = '';
+            buscador.actualizarListaEtiquetasPersonalizadas();
+        }
+    }
+
+    // NUEVO: Función para filtrar por etiquetas
+    function filterByTag(etiquetaId) {
+        buscador.filtrarLibrosPorEtiqueta(etiquetaId);
+    }
+
+    // Funciones globales restantes
+    function mostrarBusquedaManual() {
+        document.getElementById('busquedaManualPanel').classList.remove('hidden');
         document.querySelectorAll('.method-btn').forEach(btn => btn.classList.remove('active'));
         event.target.classList.add('active');
-        
-        // Scroll suave al panel
-        document.getElementById('subirCSVPanel').scrollIntoView({ 
-            behavior: 'smooth', 
-            block: 'start' 
-        });
     }
 
     function buscarLibroManual() {
@@ -2730,22 +2917,6 @@ Esta acción no se puede deshacer.`)) {
         buscador.buscarLibro(titulo, autor, tipo);
     }
 
-    function procesarCSV() {
-        buscador.procesarTodoCSV();
-    }
-
-    function cancelarCSV() {
-        buscador.cancelarProcesamientoCSV();
-    }
-
-    function descargarTemplateCSV() {
-        buscador.descargarTemplateCSV();
-    }
-
-    function limpiarBusquedas() {
-        buscador.limpiarBusquedas();
-    }
-
     function filterBooks(filter) {
         buscador.filterBooks(filter);
     }
@@ -2760,6 +2931,10 @@ Esta acción no se puede deshacer.`)) {
 
     function importarDatos() {
         buscador.importarDatos();
+    }
+
+    function limpiarBusquedas() {
+        buscador.limpiarBusquedas();
     }
 
     // Inicialización
@@ -2783,14 +2958,6 @@ Esta acción no se puede deshacer.`)) {
         
         // Auto-focus en el campo de título
         document.getElementById('tituloInput').focus();
-        
-        // Mostrar ayuda de teclado
-        setTimeout(() => {
-            if (localStorage.getItem('mostrarAyuda') !== 'false') {
-                buscador.mostrarNotificacion('💡 Presiona Enter para buscar rápidamente', 'info');
-                localStorage.setItem('mostrarAyuda', 'false');
-            }
-        }, 2000);
     });
 
     // Mejorar rendimiento en dispositivos móviles
@@ -2798,101 +2965,6 @@ Esta acción no se puede deshacer.`)) {
         document.documentElement.style.touchAction = 'manipulation';
         document.documentElement.style.webkitTapHighlightColor = 'transparent';
     }
-
-    // Prevenir zoom en inputs en iOS
-    document.addEventListener('touchstart', function(event) {
-        if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA') {
-            event.target.style.fontSize = '16px';
-        }
-    }, { passive: true });
-
-    // Función para corregir datos existentes manualmente (ejecutar en consola si es necesario)
-    window.corregirDatosManualmente = function() {
-        try {
-            // Obtener datos actuales
-            const datosRaw = localStorage.getItem('librosNoEncontrados');
-            if (datosRaw) {
-                const datos = JSON.parse(datosRaw);
-                
-                if (Array.isArray(datos)) {
-                    console.log('Datos corruptos detectados:', datos);
-                    
-                    // Convertir array a objeto
-                    const corregidos = {};
-                    datos.forEach(item => {
-                        if (typeof item === 'string') {
-                            corregidos[item] = {
-                                fecha: new Date().toISOString(),
-                                razon: 'Corregido automáticamente'
-                            };
-                        }
-                    });
-                    
-                    // Guardar datos corregidos
-                    localStorage.setItem('librosNoEncontrados', JSON.stringify(corregidos));
-                    console.log('Datos corregidos guardados:', corregidos);
-                    
-                    // Recargar la página
-                    location.reload();
-                } else {
-                    console.log('Los datos ya están en formato correcto');
-                }
-            }
-        } catch (e) {
-            console.error('Error:', e);
-        }
-    };
-
-    // Función para limpiar IDs corruptos manualmente
-window.limpiarIDsCorruptos = function() {
-    try {
-        console.log('=== LIMPIANDO IDs CORRUPTOS ===');
-        
-        // Obtener datos actuales
-        const descargadosRaw = localStorage.getItem('librosDescargados');
-        const noEncontradosRaw = localStorage.getItem('librosNoEncontrados');
-        
-        if (descargadosRaw) {
-            const descargados = JSON.parse(descargadosRaw);
-            const limpiosDescargados = {};
-            
-            Object.keys(descargados).forEach(id => {
-                if (!id.includes('check_')) {
-                    limpiosDescargados[id] = descargados[id];
-                } else {
-                    console.log('Eliminando ID corrupto de librosDescargados:', id);
-                }
-            });
-            
-            localStorage.setItem('librosDescargados', JSON.stringify(limpiosDescargados));
-            console.log('librosDescargados limpiados:', limpiosDescargados);
-        }
-        
-        if (noEncontradosRaw) {
-            const noEncontrados = JSON.parse(noEncontradosRaw);
-            const limpiosNoEncontrados = {};
-            
-            Object.keys(noEncontrados).forEach(id => {
-                if (!id.includes('check_')) {
-                    limpiosNoEncontrados[id] = noEncontrados[id];
-                } else {
-                    console.log('Eliminando ID corrupto de librosNoEncontrados:', id);
-                }
-            });
-            
-            localStorage.setItem('librosNoEncontrados', JSON.stringify(limpiosNoEncontrados));
-            console.log('librosNoEncontrados limpiados:', limpiosNoEncontrados);
-        }
-        
-        console.log('=== LIMPIEZA COMPLETADA ===');
-        
-        // Recargar la página
-        setTimeout(() => location.reload(), 1000);
-        
-    } catch (e) {
-        console.error('Error limpiando IDs corruptos:', e);
-    }
-};
 </script>
 
 </body>
