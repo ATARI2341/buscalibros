@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Biblioteca Local - Gestor Avanzado</title>
+    <title>Biblioteca Local - Carga Progresiva</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * {
@@ -160,6 +160,64 @@
             letter-spacing: 1px;
         }
 
+        .progress-container {
+            width: 100%;
+            background: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 15px 0;
+            display: none;
+        }
+
+        .progress-bar {
+            height: 20px;
+            background: linear-gradient(90deg, #4a6491, #2a5298);
+            width: 0%;
+            transition: width 0.3s ease;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 0.8rem;
+        }
+
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+            color: #6c757d;
+        }
+
+        .scanning-info {
+            background: #e7f3ff;
+            border-left: 4px solid #2a5298;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .scanning-info.active {
+            display: block;
+        }
+
+        .current-folder {
+            font-family: monospace;
+            font-weight: bold;
+            color: #2a5298;
+            margin-top: 5px;
+        }
+
+        .files-found {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #28a745;
+        }
+
         .main-content {
             display: flex;
             gap: 30px;
@@ -193,7 +251,7 @@
         .folder-tree-container {
             flex: 1;
             overflow-y: auto;
-            max-height: 600px;
+            max-height: 500px;
             padding-right: 10px;
         }
 
@@ -689,6 +747,29 @@
             margin-top: 10px;
         }
 
+        .file-type-filter {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 8px 15px;
+            border: 1px solid #dee2e6;
+            background: white;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+
+        .filter-btn.active {
+            background: #2a5298;
+            color: white;
+            border-color: #2a5298;
+        }
+
         @media (max-width: 1200px) {
             .main-content {
                 flex-direction: column;
@@ -744,27 +825,43 @@
 <body>
     <div class="container">
         <header>
-            <h1><i class="fas fa-folder-tree"></i> Gestor de Biblioteca Avanzado</h1>
-            <p class="subtitle">Administra, renombra masivamente y explora subcarpetas</p>
+            <h1><i class="fas fa-search"></i> Explorador de Biblioteca</h1>
+            <p class="subtitle">Búsqueda recursiva en subcarpetas con progreso en tiempo real</p>
             <div class="path-display" id="currentPath">
                 <i class="fas fa-folder-open"></i>
                 <span id="pathText">Selecciona una carpeta para comenzar</span>
             </div>
         </header>
         
+        <div class="scanning-info" id="scanningInfo">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                <i class="fas fa-search fa-spin" style="color: #2a5298;"></i>
+                <strong>Escaneando carpetas recursivamente...</strong>
+            </div>
+            <div class="current-folder" id="currentScanningFolder">Iniciando...</div>
+            <div class="progress-info">
+                <span>Carpetas escaneadas: <span id="foldersScanned">0</span></span>
+                <span>Archivos encontrados: <span id="filesFound">0</span></span>
+            </div>
+            <div class="progress-container" id="progressContainer">
+                <div class="progress-bar" id="progressBar">0%</div>
+            </div>
+            <div class="files-found" id="recentFiles"></div>
+        </div>
+        
         <div class="controls">
             <div class="folder-controls">
                 <button class="btn btn-primary" id="selectFolderBtn">
-                    <i class="fas fa-folder-open"></i> Seleccionar Carpeta
+                    <i class="fas fa-folder-open"></i> Explorar Carpeta
                 </button>
                 <button class="btn btn-secondary" id="refreshBtn">
-                    <i class="fas fa-sync-alt"></i> Actualizar
+                    <i class="fas fa-sync-alt"></i> Re-escanear
                 </button>
                 <button class="btn btn-success" id="newFolderBtn">
                     <i class="fas fa-plus-circle"></i> Nueva Carpeta
                 </button>
                 <button class="btn btn-warning" id="bulkRenameBtn">
-                    <i class="fas fa-edit"></i> Renombrado Masivo
+                    <i class="fas fa-edit"></i> Renombrar Masivo
                 </button>
             </div>
             
@@ -784,9 +881,30 @@
             </div>
         </div>
         
+        <div class="file-type-filter" id="fileTypeFilter">
+            <button class="filter-btn active" data-type="all">
+                <i class="fas fa-file"></i> Todos
+            </button>
+            <button class="filter-btn" data-type="image">
+                <i class="fas fa-image"></i> Imágenes
+            </button>
+            <button class="filter-btn" data-type="document">
+                <i class="fas fa-file-alt"></i> Documentos
+            </button>
+            <button class="filter-btn" data-type="audio">
+                <i class="fas fa-music"></i> Audio
+            </button>
+            <button class="filter-btn" data-type="video">
+                <i class="fas fa-video"></i> Video
+            </button>
+            <button class="filter-btn" data-type="archive">
+                <i class="fas fa-file-archive"></i> Archivos
+            </button>
+        </div>
+        
         <div class="main-content">
             <div class="sidebar">
-                <h2 class="folders-title"><i class="fas fa-sitemap"></i> Estructura de Carpetas</h2>
+                <h2 class="folders-title"><i class="fas fa-sitemap"></i> Estructura Completa</h2>
                 <div class="selection-controls">
                     <div style="display: flex; gap: 15px; align-items: center;">
                         <button class="btn btn-secondary" id="selectAllBtn" style="padding: 8px 15px;">
@@ -802,7 +920,10 @@
                 </div>
                 <div class="folder-tree-container">
                     <div class="folder-tree" id="folderTree">
-                        <!-- La estructura de carpetas se generará dinámicamente -->
+                        <div class="empty-state" style="padding: 20px;">
+                            <i class="fas fa-folder-open"></i>
+                            <p>Selecciona una carpeta para explorar</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -810,32 +931,36 @@
             <div class="library">
                 <div class="section-header">
                     <h2 class="section-title" id="currentFolderTitle">
-                        <i class="fas fa-folder"></i> Contenido de la Carpeta
+                        <i class="fas fa-folder"></i> Vista General
                     </h2>
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn btn-secondary" id="expandAllBtn" style="padding: 8px 15px;">
+                            <i class="fas fa-expand-alt"></i> Expandir Todo
+                        </button>
+                        <button class="btn btn-secondary" id="collapseAllBtn" style="padding: 8px 15px;">
+                            <i class="fas fa-compress-alt"></i> Colapsar Todo
+                        </button>
+                    </div>
                 </div>
                 
                 <div class="content-area">
                     <div class="file-info" id="fileInfo" style="display: none;">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                             <h3><i class="fas fa-info-circle"></i> Información del Archivo</h3>
-                            <div class="file-actions" id="fileActions">
-                                <!-- Botones de acción se agregarán dinámicamente -->
-                            </div>
+                            <div class="file-actions" id="fileActions"></div>
                         </div>
-                        <div class="info-grid" id="infoGrid">
-                            <!-- La información del archivo se mostrará aquí -->
-                        </div>
+                        <div class="info-grid" id="infoGrid"></div>
                     </div>
                     
                     <div class="preview-area">
                         <h3 class="preview-title"><i class="fas fa-eye"></i> Vista Previa</h3>
                         <div class="preview-content" id="previewContent">
                             <div class="empty-state">
-                                <i class="fas fa-folder-open"></i>
-                                <h3>Selecciona una carpeta</h3>
-                                <p>Usa el botón "Seleccionar Carpeta" para comenzar a explorar</p>
+                                <i class="fas fa-search"></i>
+                                <h3>Explora tu biblioteca</h3>
+                                <p>La aplicación buscará en TODAS las subcarpetas</p>
                                 <p style="margin-top: 20px; font-size: 0.9rem; color: #adb5bd;">
-                                    <i class="fas fa-lightbulb"></i> Consejo: Selecciona múltiples archivos para renombrado masivo
+                                    <i class="fas fa-lightbulb"></i> Se mostrará el progreso de escaneo en tiempo real
                                 </p>
                             </div>
                         </div>
@@ -845,8 +970,8 @@
         </div>
         
         <div class="footer">
-            <p><i class="fas fa-shield-alt"></i> <strong>Seguridad:</strong> Todos los archivos se procesan localmente en tu navegador</p>
-            <p style="margin-top: 10px;">© 2023 Gestor de Biblioteca Avanzado | Renombrado masivo y exploración de subcarpetas</p>
+            <p><i class="fas fa-shield-alt"></i> <strong>Seguridad:</strong> Búsqueda 100% local y en tiempo real</p>
+            <p style="margin-top: 10px;">© 2023 Explorador de Biblioteca | Escaneo recursivo con progreso</p>
         </div>
     </div>
     
@@ -859,7 +984,7 @@
     <!-- Pantalla de carga -->
     <div class="loading" id="loading">
         <div class="spinner"></div>
-        <p id="loadingText">Cargando archivos...</p>
+        <p id="loadingText">Iniciando escaneo...</p>
     </div>
     
     <!-- Menú contextual -->
@@ -963,8 +1088,17 @@
         let currentDirectoryHandle = null;
         let selectedItem = null;
         let selectedFiles = new Set();
-        let fileEntries = [];
+        let allFileEntries = [];
+        let filteredFileEntries = [];
         let folderStructure = {};
+        let scanningActive = false;
+        let scanProgress = {
+            foldersScanned: 0,
+            filesFound: 0,
+            totalFolders: 0,
+            currentFolder: '',
+            recentFiles: []
+        };
 
         // Inicializar la aplicación
         document.addEventListener('DOMContentLoaded', function() {
@@ -990,6 +1124,20 @@
             // Botones de selección
             document.getElementById('selectAllBtn').addEventListener('click', selectAllFiles);
             document.getElementById('deselectAllBtn').addEventListener('click', deselectAllFiles);
+            
+            // Botones de expansión
+            document.getElementById('expandAllBtn').addEventListener('click', expandAll);
+            document.getElementById('collapseAllBtn').addEventListener('click', collapseAll);
+            
+            // Filtros de tipo de archivo
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    const type = this.dataset.type;
+                    filterFilesByType(type);
+                });
+            });
             
             // Menú contextual
             document.addEventListener('click', () => hideContextMenu());
@@ -1084,7 +1232,7 @@
         // Seleccionar carpeta
         async function selectFolder() {
             try {
-                showLoading('Accediendo a la carpeta...');
+                showLoading('Preparando escaneo...');
                 
                 // Usar la File System Access API
                 const directoryHandle = await window.showDirectoryPicker();
@@ -1096,11 +1244,13 @@
                 document.getElementById('pathText').textContent = directoryHandle.name;
                 localStorage.setItem('lastFolderPath', directoryHandle.name);
                 
-                // Cargar contenido de la carpeta
-                await loadFolderContents();
+                // Mostrar información de escaneo
+                document.getElementById('scanningInfo').classList.add('active');
+                document.getElementById('progressContainer').style.display = 'block';
                 
-                hideLoading();
-                showNotification(`Carpeta "${directoryHandle.name}" cargada`, 'success');
+                // Cargar contenido de la carpeta recursivamente
+                await loadFolderContentsRecursive();
+                
             } catch (error) {
                 hideLoading();
                 if (error.name !== 'AbortError') {
@@ -1110,354 +1260,361 @@
             }
         }
 
-        // Cargar contenido de la carpeta
-        async function loadFolderContents() {
+        // Cargar contenido recursivamente con progreso
+        async function loadFolderContentsRecursive() {
             if (!currentDirectoryHandle) return;
             
-            showLoading('Explorando carpeta...');
-            
-            // Reiniciar arrays
-            fileEntries = [];
+            // Reiniciar estadísticas
+            allFileEntries = [];
+            filteredFileEntries = [];
             selectedFiles.clear();
-            folderStructure = { 
-                name: currentDirectoryHandle.name, 
-                handle: currentDirectoryHandle,
-                path: '', 
-                children: [],
-                isExpanded: true,
-                isFile: false,
-                level: 0
+            scanProgress = {
+                foldersScanned: 0,
+                filesFound: 0,
+                totalFolders: 0,
+                currentFolder: currentDirectoryHandle.name,
+                recentFiles: []
             };
             
-            // Recorrer la carpeta actual
-            await traverseDirectory(currentDirectoryHandle, folderStructure, '', 0);
+            // Iniciar escaneo
+            scanningActive = true;
             
-            // Renderizar estructura de carpetas
-            renderFolderTree();
-            
-            // Actualizar estadísticas
-            updateStatistics();
-            
-            hideLoading();
+            try {
+                // Primero contar el total de carpetas (estimación)
+                showLoading('Contando carpetas...');
+                const totalFolders = await estimateTotalFolders(currentDirectoryHandle);
+                scanProgress.totalFolders = totalFolders;
+                
+                hideLoading();
+                
+                // Iniciar escaneo recursivo
+                await recursiveScan(currentDirectoryHandle, '', 0);
+                
+                // Finalizar escaneo
+                scanningActive = false;
+                
+                // Mostrar resultados
+                filteredFileEntries = [...allFileEntries];
+                renderFolderTree();
+                updateStatistics();
+                
+                // Ocultar información de escaneo
+                setTimeout(() => {
+                    document.getElementById('scanningInfo').classList.remove('active');
+                }, 2000);
+                
+                showNotification(`Escaneo completado: ${scanProgress.filesFound} archivos en ${scanProgress.foldersScanned} carpetas`, 'success');
+                
+            } catch (error) {
+                scanningActive = false;
+                hideLoading();
+                showNotification(`Error en escaneo: ${error.message}`, 'error');
+                console.error('Error:', error);
+            }
         }
 
-        // Recorrer directorio
-        async function traverseDirectory(directoryHandle, parentNode, path = '', level = 0) {
+        // Estimar total de carpetas
+        async function estimateTotalFolders(directoryHandle, maxDepth = 10) {
+            let count = 1; // La carpeta actual
+            
+            async function countRecursive(handle, currentDepth) {
+                if (currentDepth >= maxDepth) return;
+                
+                try {
+                    for await (const entry of handle.values()) {
+                        if (entry.kind === 'directory') {
+                            count++;
+                            // Solo contar niveles más profundos si no hemos llegado al máximo
+                            if (currentDepth < maxDepth - 1) {
+                                await countRecursive(entry, currentDepth + 1);
+                            }
+                        }
+                    }
+                } catch (error) {
+                    console.warn('Error al contar carpetas:', error);
+                }
+            }
+            
+            await countRecursive(directoryHandle, 0);
+            return count;
+        }
+
+        // Escaneo recursivo con actualización de progreso
+        async function recursiveScan(directoryHandle, path = '', level = 0) {
             const currentPath = path ? `${path}/${directoryHandle.name}` : directoryHandle.name;
+            
+            // Actualizar carpeta actual en la interfaz
+            scanProgress.currentFolder = currentPath;
+            updateScanProgress();
             
             try {
                 for await (const entry of directoryHandle.values()) {
+                    if (!scanningActive) break; // Permitir cancelación
+                    
                     if (entry.kind === 'directory') {
                         // Es una carpeta
-                        const folderNode = {
-                            name: entry.name,
-                            path: currentPath,
-                            handle: entry,
-                            children: [],
-                            isExpanded: false,
-                            isFile: false,
-                            parent: parentNode,
-                            level: level + 1
-                        };
-                        parentNode.children.push(folderNode);
+                        scanProgress.foldersScanned++;
+                        updateScanProgress();
+                        
+                        // Continuar escaneando recursivamente
+                        await recursiveScan(entry, currentPath, level + 1);
                         
                     } else {
                         // Es un archivo
-                        const file = await entry.getFile();
-                        const fileInfo = {
-                            name: entry.name,
-                            path: currentPath,
-                            handle: entry,
-                            isFile: true,
-                            size: file.size,
-                            type: file.type,
-                            lastModified: file.lastModified,
-                            parent: parentNode,
-                            level: level + 1,
-                            selected: false
-                        };
-                        
-                        parentNode.children.push(fileInfo);
-                        fileEntries.push(fileInfo);
+                        try {
+                            const file = await entry.getFile();
+                            const fileInfo = {
+                                name: entry.name,
+                                path: currentPath,
+                                handle: entry,
+                                isFile: true,
+                                size: file.size,
+                                type: file.type,
+                                lastModified: file.lastModified,
+                                extension: entry.name.split('.').pop().toLowerCase(),
+                                level: level,
+                                selected: false
+                            };
+                            
+                            allFileEntries.push(fileInfo);
+                            scanProgress.filesFound++;
+                            
+                            // Mantener lista de archivos recientes para mostrar
+                            scanProgress.recentFiles.unshift(fileInfo.name);
+                            if (scanProgress.recentFiles.length > 5) {
+                                scanProgress.recentFiles.pop();
+                            }
+                            
+                            updateScanProgress();
+                            
+                        } catch (fileError) {
+                            console.warn(`Error al leer archivo ${entry.name}:`, fileError);
+                        }
                     }
                 }
             } catch (error) {
-                console.warn('Error al acceder a carpeta:', error);
+                console.warn(`Error al escanear carpeta ${currentPath}:`, error);
             }
+        }
+
+        // Actualizar progreso de escaneo en la interfaz
+        function updateScanProgress() {
+            // Actualizar contadores
+            document.getElementById('foldersScanned').textContent = scanProgress.foldersScanned;
+            document.getElementById('filesFound').textContent = scanProgress.filesFound;
+            document.getElementById('currentScanningFolder').textContent = scanProgress.currentFolder;
+            
+            // Actualizar barra de progreso
+            const progressPercent = scanProgress.totalFolders > 0 
+                ? Math.min(100, Math.round((scanProgress.foldersScanned / scanProgress.totalFolders) * 100))
+                : 0;
+            
+            const progressBar = document.getElementById('progressBar');
+            progressBar.style.width = `${progressPercent}%`;
+            progressBar.textContent = `${progressPercent}%`;
+            
+            // Actualizar archivos recientes
+            const recentFilesEl = document.getElementById('recentFiles');
+            if (scanProgress.recentFiles.length > 0) {
+                recentFilesEl.innerHTML = `<i class="fas fa-file"></i> Recientes: ${scanProgress.recentFiles.slice(0, 3).join(', ')}${scanProgress.recentFiles.length > 3 ? '...' : ''}`;
+            }
+            
+            // Actualizar estadísticas principales periódicamente
+            if (scanProgress.filesFound % 10 === 0) {
+                updateStatistics();
+            }
+        }
+
+        // Filtrar archivos por tipo
+        function filterFilesByType(type) {
+            if (type === 'all') {
+                filteredFileEntries = [...allFileEntries];
+            } else {
+                filteredFileEntries = allFileEntries.filter(file => {
+                    switch(type) {
+                        case 'image':
+                            return file.type.startsWith('image/');
+                        case 'document':
+                            const docTypes = ['pdf', 'doc', 'docx', 'txt', 'rtf', 'odt'];
+                            return docTypes.includes(file.extension) || file.type.includes('document') || file.type.includes('text');
+                        case 'audio':
+                            return file.type.startsWith('audio/');
+                        case 'video':
+                            return file.type.startsWith('video/');
+                        case 'archive':
+                            const archiveTypes = ['zip', 'rar', '7z', 'tar', 'gz'];
+                            return archiveTypes.includes(file.extension) || file.type.includes('archive') || file.type.includes('compressed');
+                        default:
+                            return true;
+                    }
+                });
+            }
+            
+            renderFolderTree();
+            updateStatistics();
         }
 
         // Renderizar árbol de carpetas
         function renderFolderTree() {
             const folderTree = document.getElementById('folderTree');
-            folderTree.innerHTML = '';
             
-            if (!folderStructure.children.length) {
+            if (filteredFileEntries.length === 0) {
                 folderTree.innerHTML = `
                     <div class="empty-state" style="padding: 20px;">
                         <i class="fas fa-folder"></i>
-                        <p>Carpeta vacía</p>
+                        <p>${scanningActive ? 'Escaneando...' : 'No se encontraron archivos'}</p>
                     </div>
                 `;
                 return;
             }
             
-            // Función recursiva para renderizar
-            function renderNode(node, container, level = 0) {
-                const nodeElement = document.createElement('div');
-                nodeElement.className = node.isFile ? 'file-item' : 'folder-item';
-                nodeElement.dataset.path = node.path;
-                nodeElement.dataset.name = node.name;
-                nodeElement.style.paddingLeft = `${20 + level * 20}px`;
-                nodeElement.title = node.name;
-                
-                if (node.selected) {
-                    nodeElement.classList.add('selected');
+            // Agrupar archivos por carpeta
+            const folderMap = new Map();
+            
+            filteredFileEntries.forEach(file => {
+                const folderPath = file.path;
+                if (!folderMap.has(folderPath)) {
+                    folderMap.set(folderPath, []);
                 }
+                folderMap.get(folderPath).push(file);
+            });
+            
+            // Crear estructura de árbol
+            let treeHTML = '';
+            
+            // Ordenar carpetas por nivel y nombre
+            const sortedFolders = Array.from(folderMap.entries()).sort((a, b) => {
+                // Primero por profundidad del path
+                const depthA = a[0].split('/').length;
+                const depthB = b[0].split('/').length;
+                if (depthA !== depthB) return depthA - depthB;
+                // Luego alfabéticamente
+                return a[0].localeCompare(b[0]);
+            });
+            
+            sortedFolders.forEach(([folderPath, files]) => {
+                const folderName = folderPath.split('/').pop() || folderPath;
+                const indent = folderPath.split('/').length * 20;
                 
-                if (node.isFile) {
-                    // Es un archivo
-                    const extension = node.name.split('.').pop().toLowerCase();
-                    const icon = getFileIcon(extension);
-                    
-                    nodeElement.innerHTML = `
-                        <div class="item-content">
-                            <input type="checkbox" class="checkbox" ${node.selected ? 'checked' : ''}>
-                            <span class="item-icon">${icon}</span>
-                            <span class="item-text">${node.name}</span>
-                        </div>
-                    `;
-                    
-                    // Eventos para archivos
-                    const checkbox = nodeElement.querySelector('.checkbox');
-                    checkbox.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        toggleFileSelection(node, checkbox.checked);
-                    });
-                    
-                    nodeElement.addEventListener('click', (e) => {
-                        if (e.target !== checkbox) {
-                            selectItem(node, nodeElement, e);
-                        }
-                    });
-                    
-                    nodeElement.addEventListener('contextmenu', (e) => showContextMenu(e, node, nodeElement));
-                    nodeElement.addEventListener('dblclick', () => downloadFile(node.name));
-                    
-                } else {
-                    // Es una carpeta
-                    const fileCount = countFilesInNode(node);
-                    
-                    nodeElement.innerHTML = `
+                treeHTML += `
+                    <div class="folder-item" style="padding-left: ${indent}px;">
                         <div class="item-content">
                             <span class="item-icon">
-                                <i class="fas fa-chevron-right"></i>
+                                <i class="fas fa-folder"></i>
                             </span>
-                            <span class="item-text">${node.name}</span>
-                            <div class="item-count">${fileCount}</div>
+                            <span class="item-text" title="${folderPath}">${folderName}</span>
+                            <div class="item-count">${files.length}</div>
+                        </div>
+                    </div>
+                `;
+                
+                // Mostrar archivos de esta carpeta
+                files.forEach(file => {
+                    const fileIndent = indent + 20;
+                    const icon = getFileIcon(file.extension);
+                    const isSelected = file.selected ? 'selected' : '';
+                    
+                    treeHTML += `
+                        <div class="file-item ${isSelected}" style="padding-left: ${fileIndent}px;" title="${file.path}/${file.name}">
+                            <div class="item-content">
+                                <input type="checkbox" class="checkbox" ${file.selected ? 'checked' : ''}>
+                                <span class="item-icon">${icon}</span>
+                                <span class="item-text">${file.name}</span>
+                            </div>
                         </div>
                     `;
-                    
-                    if (node.isExpanded) {
-                        nodeElement.classList.add('expanded');
-                        nodeElement.querySelector('.item-icon i').className = 'fas fa-chevron-down';
-                    }
-                    
-                    // Eventos para carpetas
-                    nodeElement.addEventListener('click', (e) => {
-                        if (!e.target.classList.contains('item-count')) {
-                            toggleFolderExpansion(node, nodeElement);
-                        }
-                    });
-                    
-                    nodeElement.addEventListener('contextmenu', (e) => showContextMenu(e, node, nodeElement));
-                    nodeElement.addEventListener('dblclick', () => navigateToFolder(node));
-                    
-                    // Crear contenedor para hijos
-                    const childrenContainer = document.createElement('div');
-                    childrenContainer.className = 'children-container';
-                    if (node.isExpanded) {
-                        childrenContainer.classList.add('expanded');
-                    }
-                    
-                    // Renderizar hijos si existen
-                    if (node.children && node.children.length > 0) {
-                        node.children.forEach(child => {
-                            renderNode(child, childrenContainer, level + 1);
-                        });
-                    }
-                    
-                    // Agregar todo al DOM
-                    container.appendChild(nodeElement);
-                    if (childrenContainer.children.length > 0) {
-                        container.appendChild(childrenContainer);
-                    }
-                    return;
-                }
-                
-                container.appendChild(nodeElement);
-            }
+                });
+            });
             
-            // Renderizar carpetas principales
-            folderStructure.children.forEach(child => {
-                renderNode(child, folderTree);
+            folderTree.innerHTML = treeHTML;
+            
+            // Agregar event listeners a los elementos recién creados
+            document.querySelectorAll('.file-item').forEach((item, index) => {
+                const file = filteredFileEntries[index];
+                if (!file) return;
+                
+                const checkbox = item.querySelector('.checkbox');
+                checkbox.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    toggleFileSelection(file, checkbox.checked);
+                });
+                
+                item.addEventListener('click', (e) => {
+                    if (e.target !== checkbox) {
+                        selectItem(file, item, e);
+                    }
+                });
+                
+                item.addEventListener('contextmenu', (e) => showContextMenu(e, file, item));
+                item.addEventListener('dblclick', () => downloadFile(file.name));
             });
             
             updateSelectedCount();
         }
 
-        // Contar archivos en un nodo
-        function countFilesInNode(node) {
-            let count = 0;
-            
-            function countRecursive(n) {
-                if (n.isFile) {
-                    count++;
-                } else {
-                    n.children.forEach(child => {
-                        if (child.isFile) {
-                            count++;
-                        } else {
-                            countRecursive(child);
-                        }
-                    });
-                }
-            }
-            
-            if (node.children) {
-                countRecursive(node);
-            }
-            return count;
-        }
-
         // Obtener icono según extensión
         function getFileIcon(extension) {
             const iconMap = {
-                pdf: '📕',
-                txt: '📄',
-                doc: '📝',
-                docx: '📝',
-                xls: '📊',
-                xlsx: '📊',
-                ppt: '📽',
-                pptx: '📽',
-                jpg: '🖼',
-                jpeg: '🖼',
-                png: '🖼',
-                gif: '🖼',
-                mp3: '🎵',
-                mp4: '🎬',
-                avi: '🎬',
-                zip: '📦',
-                rar: '📦',
-                exe: '⚙️',
-                js: '📜',
-                html: '🌐',
-                css: '🎨',
-                json: '🔧'
+                // Imágenes
+                jpg: '🖼', jpeg: '🖼', png: '🖼', gif: '🖼', bmp: '🖼', svg: '🖼', webp: '🖼',
+                // Documentos
+                pdf: '📕', doc: '📝', docx: '📝', txt: '📄', rtf: '📄', odt: '📝',
+                // Hojas de cálculo
+                xls: '📊', xlsx: '📊', csv: '📊', ods: '📊',
+                // Presentaciones
+                ppt: '📽', pptx: '📽', odp: '📽',
+                // Audio
+                mp3: '🎵', wav: '🎵', ogg: '🎵', flac: '🎵', m4a: '🎵',
+                // Video
+                mp4: '🎬', avi: '🎬', mkv: '🎬', mov: '🎬', wmv: '🎬',
+                // Archivos
+                zip: '📦', rar: '📦', '7z': '📦', tar: '📦', gz: '📦',
+                // Programación
+                js: '📜', html: '🌐', css: '🎨', json: '🔧', xml: '🔧',
+                // Ejecutables
+                exe: '⚙️', msi: '⚙️', bat: '⚙️', sh: '⚙️'
             };
             
             return iconMap[extension] || '📄';
         }
 
-        // Alternar expansión de carpeta
-        function toggleFolderExpansion(node, element) {
-            node.isExpanded = !node.isExpanded;
-            
-            if (node.isExpanded) {
-                element.classList.add('expanded');
-                element.querySelector('.item-icon i').className = 'fas fa-chevron-down';
-                
-                // Si no tiene hijos cargados, cargarlos
-                if (!node.children || node.children.length === 0) {
-                    loadFolderChildren(node).then(() => {
-                        renderFolderTree();
-                    });
-                } else {
-                    renderFolderTree();
-                }
+        // Alternar selección de archivo
+        function toggleFileSelection(file, isSelected) {
+            file.selected = isSelected;
+            if (isSelected) {
+                selectedFiles.add(file);
             } else {
-                element.classList.remove('expanded');
-                element.querySelector('.item-icon i').className = 'fas fa-chevron-right';
-                renderFolderTree();
+                selectedFiles.delete(file);
             }
+            updateSelectedCount();
         }
 
-        // Cargar hijos de una carpeta
-        async function loadFolderChildren(folderNode) {
-            try {
-                for await (const entry of folderNode.handle.values()) {
-                    if (entry.kind === 'directory') {
-                        const childFolder = {
-                            name: entry.name,
-                            path: `${folderNode.path}/${entry.name}`,
-                            handle: entry,
-                            children: [],
-                            isExpanded: false,
-                            isFile: false,
-                            parent: folderNode,
-                            level: folderNode.level + 1
-                        };
-                        folderNode.children.push(childFolder);
-                    } else {
-                        const file = await entry.getFile();
-                        const fileInfo = {
-                            name: entry.name,
-                            path: `${folderNode.path}/${entry.name}`,
-                            handle: entry,
-                            isFile: true,
-                            size: file.size,
-                            type: file.type,
-                            lastModified: file.lastModified,
-                            parent: folderNode,
-                            level: folderNode.level + 1,
-                            selected: false
-                        };
-                        
-                        folderNode.children.push(fileInfo);
-                        fileEntries.push(fileInfo);
-                    }
-                }
-            } catch (error) {
-                console.warn('Error al cargar subcarpeta:', error);
-            }
-        }
-
-        // Expandir todas las carpetas
-        function expandAll() {
-            function expandRecursive(node) {
-                node.isExpanded = true;
-                if (node.children) {
-                    node.children.forEach(child => {
-                        if (!child.isFile) {
-                            expandRecursive(child);
-                        }
-                    });
-                }
-            }
-            
-            expandRecursive(folderStructure);
+        // Seleccionar todos los archivos
+        function selectAllFiles() {
+            selectedFiles.clear();
+            filteredFileEntries.forEach(file => {
+                file.selected = true;
+                selectedFiles.add(file);
+            });
             renderFolderTree();
-            hideContextMenu();
-            showNotification('Todas las carpetas expandidas', 'success');
+            showNotification(`${filteredFileEntries.length} archivos seleccionados`, 'success');
         }
 
-        // Colapsar todas las carpetas
-        function collapseAll() {
-            function collapseRecursive(node) {
-                node.isExpanded = false;
-                if (node.children) {
-                    node.children.forEach(child => {
-                        if (!child.isFile) {
-                            collapseRecursive(child);
-                        }
-                    });
-                }
-            }
-            
-            collapseRecursive(folderStructure);
+        // Deseleccionar todos los archivos
+        function deselectAllFiles() {
+            selectedFiles.clear();
+            filteredFileEntries.forEach(file => {
+                file.selected = false;
+            });
             renderFolderTree();
-            hideContextMenu();
-            showNotification('Todas las carpetas colapsadas', 'success');
+            showNotification('Todos los archivos deseleccionados', 'info');
+        }
+
+        // Actualizar contador de seleccionados
+        function updateSelectedCount() {
+            const count = selectedFiles.size;
+            document.getElementById('selectedCount').textContent = count;
+            document.getElementById('selectedFilesCount').textContent = `${count} archivos seleccionados`;
         }
 
         // Seleccionar elemento
@@ -1478,66 +1635,7 @@
             
             if (item.isFile) {
                 await selectFile(item);
-            } else {
-                selectFolderItem(item);
             }
-        }
-
-        // Alternar selección de archivo
-        function toggleFileSelection(file, isSelected) {
-            file.selected = isSelected;
-            if (isSelected) {
-                selectedFiles.add(file);
-            } else {
-                selectedFiles.delete(file);
-            }
-            updateSelectedCount();
-        }
-
-        // Seleccionar todos los archivos
-        function selectAllFiles() {
-            selectedFiles.clear();
-            fileEntries.forEach(file => {
-                file.selected = true;
-                selectedFiles.add(file);
-            });
-            renderFolderTree();
-            showNotification(`${fileEntries.length} archivos seleccionados`, 'success');
-        }
-
-        // Deseleccionar todos los archivos
-        function deselectAllFiles() {
-            selectedFiles.clear();
-            fileEntries.forEach(file => {
-                file.selected = false;
-            });
-            renderFolderTree();
-            showNotification('Todos los archivos deseleccionados', 'info');
-        }
-
-        // Actualizar contador de seleccionados
-        function updateSelectedCount() {
-            const count = selectedFiles.size;
-            document.getElementById('selectedCount').textContent = count;
-            document.getElementById('selectedFilesCount').textContent = `${count} archivos seleccionados`;
-        }
-
-        // Alternar selección desde menú contextual
-        function toggleSelection() {
-            if (!selectedItem || !selectedItem.isFile) return;
-            
-            const isSelected = !selectedItem.selected;
-            selectedItem.selected = isSelected;
-            
-            if (isSelected) {
-                selectedFiles.add(selectedItem);
-            } else {
-                selectedFiles.delete(selectedItem);
-            }
-            
-            renderFolderTree();
-            updateSelectedCount();
-            hideContextMenu();
         }
 
         // Seleccionar archivo
@@ -1561,47 +1659,6 @@
             } catch (error) {
                 hideLoading();
                 showNotification('Error al cargar el archivo', 'error');
-                console.error('Error:', error);
-            }
-        }
-
-        // Seleccionar carpeta
-        function selectFolderItem(folder) {
-            const fileInfo = document.getElementById('fileInfo');
-            const previewContent = document.getElementById('previewContent');
-            
-            // Ocultar información de archivo
-            fileInfo.style.display = 'none';
-            
-            // Mostrar información de carpeta
-            previewContent.innerHTML = `
-                <div class="empty-state">
-                    <i class="fas fa-folder" style="color: #ffc107; font-size: 4rem;"></i>
-                    <h3>${folder.name}</h3>
-                    <p>Carpeta seleccionada</p>
-                    <p style="margin-top: 10px;">
-                        <strong>Archivos:</strong> ${countFilesInNode(folder)}<br>
-                        <strong>Subcarpetas:</strong> ${folder.children ? folder.children.filter(c => !c.isFile).length : 0}
-                    </p>
-                    <div class="file-actions" style="margin-top: 20px;">
-                        <button class="action-btn action-rename" onclick="showRenameModal()">
-                            <i class="fas fa-edit"></i> Renombrar Carpeta
-                        </button>
-                    </div>
-                </div>
-            `;
-        }
-
-        // Navegar a carpeta
-        async function navigateToFolder(node) {
-            if (!node.handle) return;
-            
-            try {
-                currentDirectoryHandle = node.handle;
-                await loadFolderContents();
-                showNotification(`Navegando a: ${node.name}`, 'info');
-            } catch (error) {
-                showNotification('Error al navegar a la carpeta', 'error');
                 console.error('Error:', error);
             }
         }
@@ -1683,7 +1740,7 @@
 
         // Añadir a selección masiva
         function addToBulkSelection(fileName) {
-            const file = fileEntries.find(f => f.name === fileName);
+            const file = allFileEntries.find(f => f.name === fileName);
             if (file) {
                 file.selected = true;
                 selectedFiles.add(file);
@@ -1738,40 +1795,30 @@
 
         // Actualizar estadísticas
         function updateStatistics() {
-            const folders = countFolders(folderStructure);
-            const files = fileEntries.length;
+            const totalFiles = allFileEntries.length;
+            const visibleFiles = filteredFileEntries.length;
             
-            document.getElementById('totalFolders').textContent = folders;
-            document.getElementById('totalFiles').textContent = files;
+            // Contar carpetas únicas
+            const uniqueFolders = new Set(allFileEntries.map(f => f.path));
+            const totalFolders = uniqueFolders.size;
+            
+            document.getElementById('totalFolders').textContent = totalFolders;
+            document.getElementById('totalFiles').textContent = visibleFiles;
             updateSelectedCount();
         }
 
-        // Contar carpetas
-        function countFolders(node) {
-            let count = 0;
-            
-            function countRecursive(n) {
-                if (!n.isFile) {
-                    count++;
-                    if (n.children) {
-                        n.children.forEach(child => {
-                            if (!child.isFile) {
-                                countRecursive(child);
-                            }
-                        });
-                    }
-                }
-            }
-            
-            if (node.children) {
-                node.children.forEach(child => {
-                    if (!child.isFile) {
-                        countRecursive(child);
-                    }
-                });
-            }
-            
-            return count;
+        // Expandir todas las carpetas (simulado)
+        function expandAll() {
+            // En esta versión simplificada, mostramos todos los archivos
+            filterFilesByType('all');
+            showNotification('Mostrando todos los archivos', 'info');
+        }
+
+        // Colapsar todas las carpetas (simulado)
+        function collapseAll() {
+            // Limpiar selecciones
+            deselectAllFiles();
+            showNotification('Vista reiniciada', 'info');
         }
 
         // Mostrar modal para nueva carpeta
@@ -1816,8 +1863,8 @@
                 return;
             }
             
-            await loadFolderContents();
-            showNotification('Carpeta actualizada', 'success');
+            await loadFolderContentsRecursive();
+            showNotification('Carpeta re-escaneada', 'success');
         }
 
         // Guardar archivo en directorio
@@ -1854,14 +1901,30 @@
             document.getElementById('contextMenu').classList.remove('active');
         }
 
+        // Alternar selección desde menú contextual
+        function toggleSelection() {
+            if (!selectedItem || !selectedItem.isFile) return;
+            
+            const isSelected = !selectedItem.selected;
+            selectedItem.selected = isSelected;
+            
+            if (isSelected) {
+                selectedFiles.add(selectedItem);
+            } else {
+                selectedFiles.delete(selectedItem);
+            }
+            
+            renderFolderTree();
+            updateSelectedCount();
+            hideContextMenu();
+        }
+
         // Abrir elemento seleccionado
         function openSelectedItem() {
             if (!selectedItem) return;
             
             if (selectedItem.isFile) {
                 downloadFile(selectedItem.name);
-            } else {
-                navigateToFolder(selectedItem);
             }
             
             hideContextMenu();
@@ -1870,7 +1933,7 @@
         // Mostrar modal para renombrar
         function showRenameModal() {
             if (!selectedItem) {
-                showNotification('Primero selecciona un archivo o carpeta', 'warning');
+                showNotification('Primero selecciona un archivo', 'warning');
                 hideContextMenu();
                 return;
             }
@@ -1880,13 +1943,11 @@
             document.getElementById('renameInput').value = selectedItem.name;
             
             // Seleccionar nombre sin extensión para archivos
-            if (selectedItem.isFile) {
-                const lastDotIndex = selectedItem.name.lastIndexOf('.');
-                if (lastDotIndex > 0) {
-                    setTimeout(() => {
-                        document.getElementById('renameInput').setSelectionRange(0, lastDotIndex);
-                    }, 100);
-                }
+            const lastDotIndex = selectedItem.name.lastIndexOf('.');
+            if (lastDotIndex > 0) {
+                setTimeout(() => {
+                    document.getElementById('renameInput').setSelectionRange(0, lastDotIndex);
+                }, 100);
             }
             
             document.getElementById('renameModal').style.display = 'flex';
@@ -1903,7 +1964,7 @@
         // Renombrar elemento
         async function renameItem() {
             if (!selectedItem) {
-                showNotification('No hay elemento seleccionado', 'warning');
+                showNotification('No hay archivo seleccionado', 'warning');
                 return;
             }
             
@@ -1915,12 +1976,7 @@
             
             try {
                 showLoading('Renombrando...');
-                
-                if (selectedItem.isFile) {
-                    await renameFile(selectedItem, newName);
-                } else {
-                    await renameFolder(selectedItem, newName);
-                }
+                await renameFile(selectedItem, newName);
                 
                 hideLoading();
                 hideRenameModal();
@@ -1938,11 +1994,22 @@
         // Renombrar archivo
         async function renameFile(fileItem, newName) {
             try {
+                // Obtener el directorio padre del archivo
+                const pathParts = fileItem.path.split('/');
+                let currentHandle = currentDirectoryHandle;
+                
+                // Navegar a la carpeta del archivo
+                for (let i = 0; i < pathParts.length; i++) {
+                    if (pathParts[i] && pathParts[i] !== currentDirectoryHandle.name) {
+                        currentHandle = await currentHandle.getDirectoryHandle(pathParts[i]);
+                    }
+                }
+                
                 // Verificar si el archivo existe
                 const originalFile = await fileItem.handle.getFile();
                 
                 // Crear nuevo archivo con el nuevo nombre
-                const newFileHandle = await currentDirectoryHandle.getFileHandle(newName, { create: true });
+                const newFileHandle = await currentHandle.getFileHandle(newName, { create: true });
                 const writable = await newFileHandle.createWritable();
                 
                 // Copiar contenido
@@ -1958,35 +2025,10 @@
                 reader.releaseLock();
                 
                 // Eliminar archivo original
-                await currentDirectoryHandle.removeEntry(fileItem.name);
+                await currentHandle.removeEntry(fileItem.name);
                 
             } catch (error) {
                 throw new Error(`No se pudo renombrar el archivo: ${error.message}`);
-            }
-        }
-
-        // Renombrar carpeta
-        async function renameFolder(folderItem, newName) {
-            try {
-                // Para carpetas, intentamos renombrar directamente
-                // Nota: La API actual no soporta renombrar carpetas directamente
-                // Esta es una implementación simplificada
-                
-                // Crear nueva carpeta
-                const newFolderHandle = await currentDirectoryHandle.getDirectoryHandle(newName, { create: true });
-                
-                // Mostrar mensaje informativo
-                showNotification('Para renombrar carpetas con contenido, usa el explorador de archivos', 'info');
-                
-                // Eliminar carpeta original si está vacía
-                try {
-                    await currentDirectoryHandle.removeEntry(folderItem.name, { recursive: false });
-                } catch (removeError) {
-                    // Ignorar si la carpeta no está vacía
-                }
-                
-            } catch (error) {
-                throw new Error(`No se pudo renombrar la carpeta: ${error.message}`);
             }
         }
 
@@ -2126,15 +2168,14 @@
         function showProperties() {
             if (!selectedItem) return;
             
-            const size = selectedItem.isFile ? formatSize(selectedItem.size || 0) : 'N/A';
-            const type = selectedItem.isFile ? 'Archivo' : 'Carpeta';
-            const itemCount = selectedItem.isFile ? '1 archivo' : `${countFilesInNode(selectedItem)} archivos`;
+            const size = formatSize(selectedItem.size || 0);
+            const type = 'Archivo';
             
             alert(`Propiedades de "${selectedItem.name}":\n\n` +
                   `Tipo: ${type}\n` +
                   `Ruta: ${selectedItem.path}/${selectedItem.name}\n` +
                   `Tamaño: ${size}\n` +
-                  `Contenido: ${itemCount}`);
+                  `Extensión: .${selectedItem.extension}`);
             
             hideContextMenu();
         }
@@ -2144,10 +2185,17 @@
             try {
                 if (!currentDirectoryHandle) return;
                 
-                const fileHandle = await currentDirectoryHandle.getFileHandle(fileName);
-                const file = await fileHandle.getFile();
+                // Buscar el archivo en todos los archivos
+                const file = allFileEntries.find(f => f.name === fileName);
+                if (!file) {
+                    showNotification('Archivo no encontrado', 'error');
+                    return;
+                }
                 
-                const url = URL.createObjectURL(file);
+                const fileHandle = file.handle;
+                const fileData = await fileHandle.getFile();
+                
+                const url = URL.createObjectURL(fileData);
                 const a = document.createElement('a');
                 a.href = url;
                 a.download = fileName;
