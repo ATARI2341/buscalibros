@@ -744,7 +744,7 @@
             line-height: 1.8;
         }
         
-        /* Tarjetas de libros - ESTILOS CORREGIDOS */
+        /* Tarjetas de libros */
         .book-card {
             background: white;
             border-radius: 20px;
@@ -797,7 +797,7 @@
             color: var(--danger);
         }
         
-        /* ETIQUETAS DE COLOR - ESTILOS CORREGIDOS */
+        /* ETIQUETAS DE COLOR */
         .tag-indicator {
             position: absolute;
             top: 15px;
@@ -921,7 +921,7 @@
             padding-left: 5px;
         }
         
-        /* Contenido de tarjeta - ESTILOS CORREGIDOS */
+        /* Contenido de tarjeta */
         .book-header {
             border-bottom: 2px solid var(--light);
             padding-bottom: 20px;
@@ -993,7 +993,7 @@
             color: var(--danger);
         }
         
-        /* Checkboxes - POSICIÓN CORREGIDA */
+        /* Checkboxes */
         .checkbox-container {
             position: absolute;
             top: 80px;
@@ -1401,6 +1401,11 @@
                     <span>🏷️</span>
                     <span>Gestionar Etiquetas</span>
                 </button>
+                <!-- NUEVO BOTÓN PARA REGENERAR ENLACES -->
+                <button onclick="regenerarTodosLosEnlaces()" class="action-btn" style="background: #9b59b6;">
+                    <span>🔄</span>
+                    <span>Regenerar Enlaces</span>
+                </button>
             </div>
         </div>
 
@@ -1443,6 +1448,7 @@
                         <li>📤 <strong>Exporta e importa</strong> etiquetas personalizadas con los backups</li>
                         <li>🔧 <strong>Gestiona etiquetas</strong> desde el botón "Gestionar Etiquetas"</li>
                         <li>⬇️ <strong>Los libros "No Encontrados"</strong> aparecen al final de la lista</li>
+                        <li>🔄 <strong>Nuevo:</strong> Regenera enlaces de libros existentes</li>
                     </ul>
                 </div>
             </div>
@@ -1450,7 +1456,7 @@
 
         <div class="footer">
             <p>✨ Filtra por etiquetas • Crea etiquetas personalizadas • Exporta e importa datos</p>
-            <p>🎨 Sistema completo de gestión de etiquetas • 💾 Guardado automático</p>
+            <p>🎨 Sistema completo de gestión de etiquetas • 💾 Guardado automático • 🔄 Regeneración de enlaces</p>
         </div>
     </div>
 
@@ -1745,7 +1751,7 @@
             }
         }
 
-        // Método para asignar etiqueta a un libro - CORREGIDO
+        // Método para asignar etiqueta a un libro
         asignarEtiqueta(libroId, etiquetaId, nombre, color, tipo) {
             if (!libroId) return;
             
@@ -1755,13 +1761,10 @@
                 this.guardarDatos();
                 this.mostrarNotificacion('Etiqueta eliminada', 'info');
                 
-                // Actualizar la tarjeta CORRECTAMENTE
+                // Actualizar la tarjeta
                 this.actualizarTarjetaEtiqueta(libroId, null);
-                
-                // Si estamos filtrando por esta etiqueta, refrescar filtro
-                if (this.filtroEtiquetaActivo === etiquetaId) {
-                    this.aplicarFiltrosActuales();
-                }
+                // Reordenar y mostrar libros
+                this.mostrarLibros();
                 
                 return;
             }
@@ -1780,20 +1783,18 @@
             
             this.guardarDatos();
             
-            // Actualizar la tarjeta CORRECTAMENTE
+            // Actualizar la tarjeta
             this.actualizarTarjetaEtiqueta(libroId, etiqueta);
             
             this.mostrarNotificacion(`Etiqueta "${nombre}" asignada`, 'success');
             this.actualizarEstadisticas();
             this.actualizarContadores();
             
-            // Si estamos filtrando, refrescar filtro
-            if (this.filtroEtiquetaActivo || this.filtroActivo !== 'all') {
-                this.aplicarFiltrosActuales();
-            }
+            // Reordenar y mostrar libros
+            this.mostrarLibros();
         }
 
-        // NUEVO: Método para actualizar solo la etiqueta de la tarjeta
+        // Método para actualizar solo la etiqueta de la tarjeta
         actualizarTarjetaEtiqueta(libroId, etiqueta) {
             const card = document.getElementById(`card_${libroId}`);
             if (!card) return;
@@ -2032,7 +2033,7 @@
             }
         }
 
-        // MODIFICADO: Ordenamiento con "No Encontrados" al final
+        // MODIFICADO: NUEVO SISTEMA DE ORDENAMIENTO JERÁRQUICO
         mostrarLibros() {
             const grid = document.getElementById('booksGrid');
             
@@ -2041,16 +2042,46 @@
                 return;
             }
 
-            // NUEVO ORDENAMIENTO: No encontrados al final, luego por fecha (más recientes primero)
+            // SISTEMA DE ORDENAMIENTO JERÁRQUICO:
+            // 1. TOP: Libros con etiqueta (pero NO descargados y NO "no encontrados")
+            // 2. MIDDLE: Libros sin ningún estado
+            // 3. LOW MIDDLE: Libros marcados como "No Encontrados"
+            // 4. BOTTOM: Libros marcados como "Descargados"
+            
             const librosOrdenados = [...this.libros].sort((a, b) => {
+                const aDescargado = this.librosDescargados[a.id] || false;
+                const bDescargado = this.librosDescargados[b.id] || false;
                 const aNoEncontrado = this.librosNoEncontrados[a.id] || false;
                 const bNoEncontrado = this.librosNoEncontrados[b.id] || false;
+                const aEtiqueta = this.librosEtiquetas[a.id];
+                const bEtiqueta = this.librosEtiquetas[b.id];
                 
-                // PRIMERO: Los NO encontrados van AL FINAL
-                if (aNoEncontrado && !bNoEncontrado) return 1;
-                if (!aNoEncontrado && bNoEncontrado) return -1;
+                // Función para calcular peso jerárquico
+                const calcularPeso = (libroId) => {
+                    let peso = 0;
+                    const descargado = this.librosDescargados[libroId];
+                    const noEncontrado = this.librosNoEncontrados[libroId];
+                    const etiqueta = this.librosEtiquetas[libroId];
+                    
+                    // Nivel 4: Descargados (más bajo)
+                    if (descargado) return 4;
+                    // Nivel 3: No encontrados
+                    if (noEncontrado) return 3;
+                    // Nivel 2: Sin estado (sin etiqueta, sin marcar)
+                    if (!etiqueta) return 2;
+                    // Nivel 1: Con etiqueta (más alto)
+                    return 1;
+                };
                 
-                // SEGUNDO: Ordenar por fecha (más recientes primero)
+                const pesoA = calcularPeso(a.id);
+                const pesoB = calcularPeso(b.id);
+                
+                // Ordenar por peso jerárquico
+                if (pesoA !== pesoB) {
+                    return pesoA - pesoB;
+                }
+                
+                // Si tienen el mismo peso jerárquico, ordenar por fecha (más recientes primero)
                 return b.timestamp - a.timestamp;
             });
 
@@ -2063,7 +2094,6 @@
             }
         }
 
-        // CORREGIDO: Estructura de la tarjeta mejorada (sin errores de sintaxis)
         crearTarjetaLibro(libro) {
             if (!libro.titulo) {
                 console.error('Libro sin título:', libro);
@@ -2097,14 +2127,14 @@
             return `
                 <div class="book-card ${esDescargado ? 'descargado' : ''} ${esNoEncontrado ? 'no-encontrado' : ''}" id="card_${libro.id}">
                     
-                    <!-- Indicador de etiqueta - CORREGIDO -->
+                    <!-- Indicador de etiqueta -->
                     <div class="tag-indicator ${tagClass}" 
                          ${tagStyle}
                          onclick="buscador.toggleMenuEtiquetas('${libro.id}', event)"
                          title="${tagTitle}">
                     </div>
                     
-                    <!-- Checkboxes para descargado/no encontrado - POSICIÓN CORREGIDA -->
+                    <!-- Checkboxes para descargado/no encontrado -->
                     <div class="checkbox-container">
                         <div class="checkbox-group descargado">
                             <input type="checkbox" id="check_descargado_${libro.id}" class="descargado-checkbox" 
@@ -2129,7 +2159,7 @@
                         </div>
                     </div>
                     
-                    <!-- Menú desplegable de etiquetas - CORREGIDO (sin errores de sintaxis) -->
+                    <!-- Menú desplegable de etiquetas -->
                     <div class="tag-menu" id="tagMenu_${libro.id}">
                         <h4>Asignar Etiqueta</h4>
                         
@@ -2169,7 +2199,7 @@
                         ` : ''}
                     </div>
                     
-                    <!-- Contenido de la tarjeta - ESTILOS CORREGIDOS -->
+                    <!-- Contenido de la tarjeta -->
                     <div class="book-header">
                         <div class="book-title">${this.escapeHtml(libro.titulo)}</div>
                         <div class="book-author">${this.escapeHtml(libro.autor || 'Autor desconocido')}</div>
@@ -2458,6 +2488,7 @@
             }
         }
 
+        // MODIFICADO: Método para actualizar marcadores con reordenamiento automático
         actualizarMarcador(tipo, checkbox) {
             const card = checkbox.closest('.book-card');
             const checkboxId = checkbox.id;
@@ -2475,7 +2506,10 @@
             if (tipo === 'descargado') {
                 if (checkbox.checked) {
                     card.classList.add('descargado');
-                    this.librosDescargados[libroId] = true;
+                    this.librosDescargados[libroId] = {
+                        fecha: new Date().toISOString(),
+                        marcado: true
+                    };
                     
                     if (noEncontradoCheckbox) {
                         noEncontradoCheckbox.checked = false;
@@ -2529,6 +2563,9 @@
             this.guardarDatos();
             this.actualizarContadores();
             this.actualizarEstadisticas();
+            
+            // REORDENAR y mostrar libros automáticamente
+            this.mostrarLibros();
             
             // Si hay filtros activos, aplicar nuevamente
             if (this.filtroActivo !== 'all' || this.filtroEtiquetaActivo) {
@@ -2652,18 +2689,29 @@
         }
 
         generarEnlaces(titulo, autor) {
-            const query = `${titulo} ${autor}`.trim();
+            const query = `${titulo}`.trim();
+            const queryAutor =` ${autor}`.trim();
             const queryEncoded = encodeURIComponent(query);
+            const queryEncoded2 = encodeURIComponent(queryAutor);
             
             return {
                 'Z-Library': `https://z-library.ec/s/${query.toLowerCase().replace(/\s+/g, '%20')}`,
                 'LibGen': `https://libgen.is/search.php?req=${queryEncoded}`,
-                'Audible': `https://www.audible.com/search?keywords=${queryEncoded}`,
+                'audiobookbay': `https://audiobookbay.lu/?s=${queryEncoded}`,
                 'YouTube': `https://www.youtube.com/results?search_query=${queryEncoded}+audiolibro`,
                 'Internet Archive': `https://archive.org/search.php?query=${queryEncoded}+audio`,
                 'Librivox': `https://librivox.org/search?q=${queryEncoded}`,
                 'Google Books': `https://www.google.com/search?q=${queryEncoded}+libro`,
-                'Amazon': `https://www.amazon.com/s?k=${queryEncoded}`
+
+
+
+                'Z-Library por autor': `https://z-library.ec/s/${queryAutor.toLowerCase().replace(/\s+/g, '%20')}`,
+                'LibGen por autor': `https://libgen.is/search.php?req=${queryEncoded2}`,
+                'audiobookbay por autor': `https://audiobookbay.lu/?s=${queryEncoded2}`,
+                'YouTube por autor': `https://www.youtube.com/results?search_query=${queryEncoded2}+audiolibro`,
+                'Internet Archive por autor': `https://archive.org/search.php?query=${queryEncoded2}+audio`,
+                'Librivox por autor': `https://librivox.org/search?q=${queryEncoded2}`,
+                'Google Books por autor': `https://www.google.com/search?q=${queryEncoded2}+libro`,
             };
         }
 
@@ -2689,12 +2737,20 @@
             const iconos = {
                 'Z-Library': '📥',
                 'LibGen': '📚',
-                'Audible': '🔊',
+                'audiobookbay': '🔊',
                 'YouTube': '🎥',
                 'Internet Archive': '🏛️',
                 'Librivox': '🆓',
                 'Google Books': '🔍',
-                'Amazon': '🛒'
+
+
+                'Z-Library por autor': '📥',
+                'LibGen por autor': '📚',
+                'audiobookbay por autor': '🔊',
+                'YouTube por autor': '🎥',
+                'Internet Archive por autor': '🏛️',
+                'Librivox por autor': '🆓',
+                'Google Books por autor': '🔍',
             };
 
             icono = iconos[plataforma] || '🔗';
@@ -2858,6 +2914,193 @@
             
             this.mostrarNotificacion('Lista exportada con etiquetas personalizadas', 'success');
         }
+
+        // NUEVO: MÉTODO PARA REGENERAR ENLACES DE TODOS LOS LIBROS
+        regenerarEnlacesLibros() {
+            if (this.libros.length === 0) {
+                this.mostrarNotificacion('No hay libros en el historial', 'warning');
+                return;
+            }
+
+            const totalLibros = this.libros.length;
+            let regenerados = 0;
+            let fallidos = 0;
+
+            // Mostrar mensaje de confirmación
+            const mensajeConfirmacion = `¿Regenerar enlaces para ${totalLibros} libros?\n\n` +
+                `Esta operación:\n` +
+                `• Buscará nuevamente cada libro en todas las plataformas\n` +
+                `• Preservará marcadores de descargado/no encontrado\n` +
+                `• Preservará etiquetas asignadas\n` +
+                `• Puede tardar varios minutos\n\n` +
+                `¿Continuar?`;
+
+            if (!confirm(mensajeConfirmacion)) {
+                return;
+            }
+
+            // Mostrar progreso
+            const notificacionProgreso = document.createElement('div');
+            notificacionProgreso.id = 'progress-notification';
+            notificacionProgreso.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                padding: 20px;
+                background: white;
+                border-radius: 12px;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+                z-index: 10000;
+                text-align: center;
+                min-width: 300px;
+                border: 2px solid var(--primary);
+            `;
+            notificacionProgreso.innerHTML = `
+                <h3 style="margin: 0 0 15px 0; color: var(--primary);">🔄 Regenerando Enlaces</h3>
+                <div id="progress-text" style="margin-bottom: 10px;">Procesando libro 1 de ${totalLibros}...</div>
+                <div style="background: var(--bg-color); border-radius: 10px; height: 20px; overflow: hidden;">
+                    <div id="progress-bar" style="height: 100%; background: var(--primary); width: 0%; transition: width 0.3s;"></div>
+                </div>
+                <div id="progress-details" style="margin-top: 10px; font-size: 12px; color: var(--gray);"></div>
+                <button id="cancel-regen" style="margin-top: 15px; padding: 8px 20px; background: var(--danger); color: white; border: none; border-radius: 20px; cursor: pointer;">
+                    Cancelar
+                </button>
+            `;
+            document.body.appendChild(notificacionProgreso);
+
+            // Variable para cancelar
+            let cancelarProceso = false;
+            document.getElementById('cancel-regen').addEventListener('click', () => {
+                cancelarProceso = true;
+            });
+
+            // Función para procesar los libros en secuencia
+            const procesarLibros = async () => {
+                for (let i = 0; i < totalLibros && !cancelarProceso; i++) {
+                    const libro = this.libros[i];
+                    
+                    // Actualizar progreso
+                    document.getElementById('progress-text').textContent = 
+                        `Procesando libro ${i + 1} de ${totalLibros}: ${libro.titulo.substring(0, 40)}...`;
+                    document.getElementById('progress-bar').style.width = 
+                        `${((i + 1) / totalLibros) * 100}%`;
+                    document.getElementById('progress-details').innerHTML = 
+                        `Regenerados: ${regenerados} | Fallidos: ${fallidos}`;
+
+                    // Preservar marcadores
+                    const marcadoresPreservados = {
+                        descargado: this.librosDescargados[libro.id],
+                        noEncontrado: this.librosNoEncontrados[libro.id],
+                        etiqueta: this.librosEtiquetas[libro.id]
+                    };
+
+                    try {
+                        // Buscar el libro nuevamente (búsqueda completa)
+                        const todosEnlaces = this.generarEnlaces(libro.titulo, libro.autor);
+                        const enlacesActualizados = [];
+                        
+                        Object.entries(todosEnlaces).forEach(([plataforma, url]) => {
+                            const analisis = this.analizarEnlace(plataforma, url);
+                            
+                            enlacesActualizados.push({
+                                plataforma: plataforma,
+                                url: url,
+                                tipo: analisis.tipo,
+                                icono: analisis.icono,
+                                esDirecto: analisis.esDirecto
+                            });
+                        });
+
+                        // Actualizar el libro
+                        const libroActualizado = {
+                            ...libro,
+                            enlaces: enlacesActualizados,
+                            fechaBusqueda: new Date().toISOString(),
+                            timestamp: Date.now()
+                        };
+
+                        // Reemplazar en el array
+                        this.libros[i] = libroActualizado;
+
+                        // Restaurar marcadores con el nuevo ID (por si cambió)
+                        if (marcadoresPreservados.descargado) {
+                            this.librosDescargados[libroActualizado.id] = marcadoresPreservados.descargado;
+                        }
+                        if (marcadoresPreservados.noEncontrado) {
+                            this.librosNoEncontrados[libroActualizado.id] = marcadoresPreservados.noEncontrado;
+                        }
+                        if (marcadoresPreservados.etiqueta) {
+                            this.librosEtiquetas[libroActualizado.id] = marcadoresPreservados.etiqueta;
+                        }
+
+                        // Actualizar contador de no encontrados si no hay enlaces
+                        if (enlacesActualizados.length === 0) {
+                            this.librosNoEncontrados[libroActualizado.id] = {
+                                fecha: new Date().toISOString(),
+                                razon: 'Regeneración: No se encontraron enlaces válidos'
+                            };
+                            delete this.librosDescargados[libroActualizado.id];
+                            fallidos++;
+                        } else {
+                            // Solo eliminar el marcador de no encontrado si ahora hay enlaces
+                            if (this.librosNoEncontrados[libroActualizado.id] && 
+                                this.librosNoEncontrados[libroActualizado.id].razon?.includes('Regeneración')) {
+                                delete this.librosNoEncontrados[libroActualizado.id];
+                            }
+                            regenerados++;
+                        }
+
+                        // Pausa para no sobrecargar las APIs
+                        await new Promise(resolve => setTimeout(resolve, 300));
+
+                    } catch (error) {
+                        console.error(`Error regenerando ${libro.titulo}:`, error);
+                        fallidos++;
+                        
+                        // Preservar el estado original en caso de error
+                        if (marcadoresPreservados.descargado) {
+                            this.librosDescargados[libro.id] = marcadoresPreservados.descargado;
+                        }
+                        if (marcadoresPreservados.noEncontrado) {
+                            this.librosNoEncontrados[libro.id] = marcadoresPreservados.noEncontrado;
+                        }
+                        if (marcadoresPreservados.etiqueta) {
+                            this.librosEtiquetas[libro.id] = marcadoresPreservados.etiqueta;
+                        }
+                    }
+                }
+
+                // Finalizar proceso
+                if (cancelarProceso) {
+                    this.mostrarNotificacion('Regeneración cancelada por el usuario', 'info');
+                } else {
+                    // Guardar todos los cambios
+                    this.guardarDatos();
+                    
+                    // Actualizar interfaz
+                    this.mostrarLibros();
+                    this.actualizarEstadisticas();
+                    this.actualizarContadores();
+                    
+                    // Mostrar resumen
+                    const mensajeResumen = `Regeneración completada:\n\n` +
+                        `✅ ${regenerados} libros actualizados\n` +
+                        `❌ ${fallidos} libros con errores\n\n` +
+                        `Los marcadores y etiquetas se han preservado.`;
+                    
+                    this.mostrarNotificacion(mensajeResumen, 'success');
+                }
+
+                // Eliminar ventana de progreso
+                if (document.getElementById('progress-notification')) {
+                    document.body.removeChild(notificacionProgreso);
+                }
+            };
+
+            // Iniciar procesamiento
+            procesarLibros();
+        }
     }
 
     // Variables globales
@@ -2888,9 +3131,18 @@
         }
     }
 
-    // NUEVO: Función para filtrar por etiquetas
+    // Función para filtrar por etiquetas
     function filterByTag(etiquetaId) {
         buscador.filtrarLibrosPorEtiqueta(etiquetaId);
+    }
+
+    // Funciones para regenerar enlaces
+    function regenerarTodosLosEnlaces() {
+        buscador.regenerarEnlacesLibros();
+    }
+
+    function regenerarEnlaceIndividual(libroId) {
+        buscador.regenerarEnlacesLibro(libroId);
     }
 
     // Funciones globales restantes
