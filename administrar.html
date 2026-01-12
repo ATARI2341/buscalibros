@@ -1,0 +1,2217 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Biblioteca Local - Gestor Avanzado</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 25px;
+            background: linear-gradient(to right, #1e3c72, #2a5298);
+            color: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            font-weight: 300;
+        }
+
+        .path-display {
+            background: rgba(255,255,255,0.1);
+            padding: 12px 20px;
+            border-radius: 10px;
+            margin-top: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: monospace;
+            font-size: 0.95rem;
+            justify-content: center;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: white;
+            padding: 20px 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .folder-controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s;
+            font-size: 0.95rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(to right, #4a6491, #2c3e50);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(74, 100, 145, 0.3);
+        }
+
+        .btn-secondary {
+            background: #f8f9fa;
+            color: #495057;
+            border: 2px solid #dee2e6;
+        }
+
+        .btn-secondary:hover {
+            background: #e9ecef;
+            transform: translateY(-2px);
+        }
+
+        .btn-success {
+            background: linear-gradient(to right, #28a745, #20c997);
+            color: white;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(40, 167, 69, 0.3);
+        }
+
+        .btn-warning {
+            background: linear-gradient(to right, #ffc107, #fd7e14);
+            color: #212529;
+        }
+
+        .btn-warning:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 193, 7, 0.3);
+        }
+
+        .stats {
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+
+        .stat-item {
+            text-align: center;
+            min-width: 120px;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #1e3c72;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: #6c757d;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .main-content {
+            display: flex;
+            gap: 30px;
+            min-height: 600px;
+        }
+
+        .sidebar {
+            flex: 0 0 350px;
+            background-color: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+            height: fit-content;
+            position: sticky;
+            top: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .folders-title {
+            font-size: 1.4rem;
+            margin-bottom: 20px;
+            color: #2c3e50;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f1f3f5;
+        }
+
+        .folder-tree-container {
+            flex: 1;
+            overflow-y: auto;
+            max-height: 600px;
+            padding-right: 10px;
+        }
+
+        .folder-tree-container::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .folder-tree-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        .folder-tree-container::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 10px;
+        }
+
+        .folder-tree {
+            list-style: none;
+        }
+
+        .folder-item, .file-item {
+            padding: 12px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+            user-select: none;
+            position: relative;
+        }
+
+        .folder-item:hover, .file-item:hover {
+            background-color: #f8f9fa;
+        }
+
+        .folder-item.selected, .file-item.selected {
+            background-color: #e7f3ff;
+            border-left: 4px solid #2a5298;
+        }
+
+        .item-content {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .item-icon {
+            width: 24px;
+            text-align: center;
+            flex-shrink: 0;
+            transition: transform 0.2s;
+        }
+
+        .folder-item.expanded .item-icon i {
+            transform: rotate(90deg);
+        }
+
+        .item-text {
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .item-count {
+            background-color: #e7f3ff;
+            color: #2a5298;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            min-width: 40px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        .children-container {
+            margin-left: 30px;
+            display: none;
+        }
+
+        .children-container.expanded {
+            display: block;
+        }
+
+        .checkbox {
+            margin-right: 10px;
+            cursor: pointer;
+            width: 18px;
+            height: 18px;
+        }
+
+        .library {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #f1f3f5;
+        }
+
+        .section-title {
+            font-size: 1.6rem;
+            color: #2c3e50;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .content-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+
+        .file-info {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+
+        .file-info h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .info-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .info-label {
+            font-size: 0.85rem;
+            color: #6c757d;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .info-value {
+            font-size: 1.1rem;
+            color: #2c3e50;
+            font-weight: 600;
+            word-break: break-all;
+        }
+
+        .preview-area {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 25px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .preview-title {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .preview-content {
+            flex: 1;
+            background: white;
+            border-radius: 8px;
+            padding: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: auto;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #6c757d;
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            color: #dee2e6;
+        }
+
+        .empty-state h3 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            color: #495057;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding: 25px;
+            color: #6c757d;
+            font-size: 0.9rem;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+        }
+
+        .notification {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            padding: 15px 25px;
+            background: #28a745;
+            color: white;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s;
+            z-index: 1000;
+        }
+
+        .notification.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255,255,255,0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 20px;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s;
+        }
+
+        .loading.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #2a5298;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .context-menu {
+            position: absolute;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 5px 25px rgba(0,0,0,0.15);
+            padding: 10px 0;
+            min-width: 200px;
+            z-index: 1000;
+            display: none;
+        }
+
+        .context-menu.active {
+            display: block;
+        }
+
+        .context-item {
+            padding: 12px 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.2s;
+        }
+
+        .context-item:hover {
+            background-color: #f8f9fa;
+        }
+
+        .context-divider {
+            height: 1px;
+            background: #dee2e6;
+            margin: 5px 0;
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 3000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .modal-title {
+            margin-bottom: 20px;
+            color: #2c3e50;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .modal-input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #2a5298;
+            border-radius: 8px;
+            font-size: 1rem;
+            margin: 15px 0;
+        }
+
+        .modal-textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #2a5298;
+            border-radius: 8px;
+            font-size: 1rem;
+            margin: 15px 0;
+            min-height: 100px;
+            resize: vertical;
+            font-family: monospace;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 25px;
+        }
+
+        .modal-btn {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.3s;
+        }
+
+        .modal-btn-confirm {
+            background: #28a745;
+            color: white;
+        }
+
+        .modal-btn-confirm:hover {
+            background: #218838;
+        }
+
+        .modal-btn-cancel {
+            background: #dc3545;
+            color: white;
+        }
+
+        .modal-btn-cancel:hover {
+            background: #c82333;
+        }
+
+        .file-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .action-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+        }
+
+        .action-rename {
+            background: #ffc107;
+            color: #212529;
+        }
+
+        .action-rename:hover {
+            background: #e0a800;
+        }
+
+        .action-download {
+            background: #17a2b8;
+            color: white;
+        }
+
+        .action-download:hover {
+            background: #138496;
+        }
+
+        .action-bulk {
+            background: #6f42c1;
+            color: white;
+        }
+
+        .action-bulk:hover {
+            background: #5a2d9c;
+        }
+
+        .bulk-preview {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .bulk-preview-item {
+            padding: 5px 0;
+            border-bottom: 1px solid #dee2e6;
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+
+        .bulk-preview-item:last-child {
+            border-bottom: none;
+        }
+
+        .selection-controls {
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f1f3f5;
+        }
+
+        .selection-info {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            margin-top: 10px;
+        }
+
+        @media (max-width: 1200px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                position: static;
+            }
+            
+            .info-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .controls {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .folder-controls {
+                width: 100%;
+                justify-content: space-between;
+            }
+            
+            .stats {
+                width: 100%;
+                justify-content: space-around;
+            }
+            
+            h1 {
+                font-size: 2.2rem;
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .btn {
+                padding: 10px 15px;
+                font-size: 0.9rem;
+            }
+            
+            .file-actions {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-folder-tree"></i> Gestor de Biblioteca Avanzado</h1>
+            <p class="subtitle">Administra, renombra masivamente y explora subcarpetas</p>
+            <div class="path-display" id="currentPath">
+                <i class="fas fa-folder-open"></i>
+                <span id="pathText">Selecciona una carpeta para comenzar</span>
+            </div>
+        </header>
+        
+        <div class="controls">
+            <div class="folder-controls">
+                <button class="btn btn-primary" id="selectFolderBtn">
+                    <i class="fas fa-folder-open"></i> Seleccionar Carpeta
+                </button>
+                <button class="btn btn-secondary" id="refreshBtn">
+                    <i class="fas fa-sync-alt"></i> Actualizar
+                </button>
+                <button class="btn btn-success" id="newFolderBtn">
+                    <i class="fas fa-plus-circle"></i> Nueva Carpeta
+                </button>
+                <button class="btn btn-warning" id="bulkRenameBtn">
+                    <i class="fas fa-edit"></i> Renombrado Masivo
+                </button>
+            </div>
+            
+            <div class="stats">
+                <div class="stat-item">
+                    <div class="stat-value" id="totalFolders">0</div>
+                    <div class="stat-label">Carpetas</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="totalFiles">0</div>
+                    <div class="stat-label">Archivos</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="selectedCount">0</div>
+                    <div class="stat-label">Seleccionados</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <div class="sidebar">
+                <h2 class="folders-title"><i class="fas fa-sitemap"></i> Estructura de Carpetas</h2>
+                <div class="selection-controls">
+                    <div style="display: flex; gap: 15px; align-items: center;">
+                        <button class="btn btn-secondary" id="selectAllBtn" style="padding: 8px 15px;">
+                            <i class="fas fa-check-square"></i> Seleccionar Todo
+                        </button>
+                        <button class="btn btn-secondary" id="deselectAllBtn" style="padding: 8px 15px;">
+                            <i class="fas fa-square"></i> Deseleccionar
+                        </button>
+                    </div>
+                    <div class="selection-info">
+                        <span id="selectedFilesCount">0 archivos seleccionados</span>
+                    </div>
+                </div>
+                <div class="folder-tree-container">
+                    <div class="folder-tree" id="folderTree">
+                        <!-- La estructura de carpetas se generará dinámicamente -->
+                    </div>
+                </div>
+            </div>
+            
+            <div class="library">
+                <div class="section-header">
+                    <h2 class="section-title" id="currentFolderTitle">
+                        <i class="fas fa-folder"></i> Contenido de la Carpeta
+                    </h2>
+                </div>
+                
+                <div class="content-area">
+                    <div class="file-info" id="fileInfo" style="display: none;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <h3><i class="fas fa-info-circle"></i> Información del Archivo</h3>
+                            <div class="file-actions" id="fileActions">
+                                <!-- Botones de acción se agregarán dinámicamente -->
+                            </div>
+                        </div>
+                        <div class="info-grid" id="infoGrid">
+                            <!-- La información del archivo se mostrará aquí -->
+                        </div>
+                    </div>
+                    
+                    <div class="preview-area">
+                        <h3 class="preview-title"><i class="fas fa-eye"></i> Vista Previa</h3>
+                        <div class="preview-content" id="previewContent">
+                            <div class="empty-state">
+                                <i class="fas fa-folder-open"></i>
+                                <h3>Selecciona una carpeta</h3>
+                                <p>Usa el botón "Seleccionar Carpeta" para comenzar a explorar</p>
+                                <p style="margin-top: 20px; font-size: 0.9rem; color: #adb5bd;">
+                                    <i class="fas fa-lightbulb"></i> Consejo: Selecciona múltiples archivos para renombrado masivo
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p><i class="fas fa-shield-alt"></i> <strong>Seguridad:</strong> Todos los archivos se procesan localmente en tu navegador</p>
+            <p style="margin-top: 10px;">© 2023 Gestor de Biblioteca Avanzado | Renombrado masivo y exploración de subcarpetas</p>
+        </div>
+    </div>
+    
+    <!-- Notificación -->
+    <div class="notification" id="notification">
+        <i class="fas fa-check-circle"></i>
+        <span id="notificationText">Operación completada</span>
+    </div>
+    
+    <!-- Pantalla de carga -->
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <p id="loadingText">Cargando archivos...</p>
+    </div>
+    
+    <!-- Menú contextual -->
+    <div class="context-menu" id="contextMenu">
+        <div class="context-item" id="ctxOpen">
+            <i class="fas fa-folder-open"></i> Abrir/Seleccionar
+        </div>
+        <div class="context-item" id="ctxRename">
+            <i class="fas fa-edit"></i> Renombrar
+        </div>
+        <div class="context-item" id="ctxSelect">
+            <i class="fas fa-check-square"></i> Seleccionar
+        </div>
+        <div class="context-divider"></div>
+        <div class="context-item" id="ctxExpand">
+            <i class="fas fa-chevron-right"></i> Expandir Todo
+        </div>
+        <div class="context-item" id="ctxCollapse">
+            <i class="fas fa-chevron-down"></i> Colapsar Todo
+        </div>
+        <div class="context-divider"></div>
+        <div class="context-item" id="ctxProperties">
+            <i class="fas fa-info-circle"></i> Propiedades
+        </div>
+    </div>
+
+    <!-- Modal para renombrar -->
+    <div class="modal-overlay" id="renameModal">
+        <div class="modal-content">
+            <h3 class="modal-title"><i class="fas fa-edit"></i> Renombrar</h3>
+            <p id="renamePrompt">Ingresa el nuevo nombre:</p>
+            <input type="text" id="renameInput" class="modal-input" autocomplete="off">
+            <div class="modal-buttons">
+                <button id="renameConfirm" class="modal-btn modal-btn-confirm">
+                    <i class="fas fa-check"></i> Confirmar
+                </button>
+                <button id="renameCancel" class="modal-btn modal-btn-cancel">
+                    <i class="fas fa-times"></i> Cancelar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para renombrado masivo -->
+    <div class="modal-overlay" id="bulkRenameModal">
+        <div class="modal-content">
+            <h3 class="modal-title"><i class="fas fa-edit"></i> Renombrado Masivo</h3>
+            <p>Seleccionados: <span id="bulkFileCount">0</span> archivos</p>
+            
+            <div style="margin: 20px 0;">
+                <label><strong>Buscar texto:</strong></label>
+                <input type="text" id="bulkFindText" class="modal-input" placeholder="Texto a buscar" autocomplete="off">
+                
+                <label style="display: block; margin-top: 15px;"><strong>Reemplazar con:</strong></label>
+                <input type="text" id="bulkReplaceText" class="modal-input" placeholder="Texto de reemplazo" autocomplete="off">
+                
+                <div style="margin-top: 15px; display: flex; gap: 15px; align-items: center;">
+                    <input type="checkbox" id="bulkCaseSensitive">
+                    <label for="bulkCaseSensitive">Distinguir mayúsculas/minúsculas</label>
+                </div>
+            </div>
+            
+            <div id="bulkPreview" class="bulk-preview" style="display: none;">
+                <p><strong>Vista previa de cambios:</strong></p>
+                <div id="bulkPreviewContent"></div>
+            </div>
+            
+            <div class="modal-buttons">
+                <button id="bulkPreviewBtn" class="modal-btn" style="background: #17a2b8; color: white;">
+                    <i class="fas fa-eye"></i> Vista Previa
+                </button>
+                <button id="bulkConfirm" class="modal-btn modal-btn-confirm">
+                    <i class="fas fa-check"></i> Aplicar Cambios
+                </button>
+                <button id="bulkCancel" class="modal-btn modal-btn-cancel">
+                    <i class="fas fa-times"></i> Cancelar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para nueva carpeta -->
+    <div class="modal-overlay" id="newFolderModal">
+        <div class="modal-content">
+            <h3 class="modal-title"><i class="fas fa-folder-plus"></i> Nueva Carpeta</h3>
+            <p>Ingresa el nombre de la nueva carpeta:</p>
+            <input type="text" id="newFolderName" class="modal-input" autocomplete="off">
+            <div class="modal-buttons">
+                <button id="newFolderConfirm" class="modal-btn modal-btn-confirm">
+                    <i class="fas fa-check"></i> Crear
+                </button>
+                <button id="newFolderCancel" class="modal-btn modal-btn-cancel">
+                    <i class="fas fa-times"></i> Cancelar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Variables globales
+        let currentDirectoryHandle = null;
+        let selectedItem = null;
+        let selectedFiles = new Set();
+        let fileEntries = [];
+        let folderStructure = {};
+
+        // Inicializar la aplicación
+        document.addEventListener('DOMContentLoaded', function() {
+            setupEventListeners();
+            setupDragAndDrop();
+            loadFromLocalStorage();
+        });
+
+        // Configurar event listeners
+        function setupEventListeners() {
+            // Botón para seleccionar carpeta
+            document.getElementById('selectFolderBtn').addEventListener('click', selectFolder);
+            
+            // Botón de actualizar
+            document.getElementById('refreshBtn').addEventListener('click', refreshFolder);
+            
+            // Botón para nueva carpeta
+            document.getElementById('newFolderBtn').addEventListener('click', showNewFolderModal);
+            
+            // Botón para renombrado masivo
+            document.getElementById('bulkRenameBtn').addEventListener('click', showBulkRenameModal);
+            
+            // Botones de selección
+            document.getElementById('selectAllBtn').addEventListener('click', selectAllFiles);
+            document.getElementById('deselectAllBtn').addEventListener('click', deselectAllFiles);
+            
+            // Menú contextual
+            document.addEventListener('click', () => hideContextMenu());
+            document.getElementById('ctxOpen').addEventListener('click', openSelectedItem);
+            document.getElementById('ctxRename').addEventListener('click', showRenameModal);
+            document.getElementById('ctxSelect').addEventListener('click', toggleSelection);
+            document.getElementById('ctxExpand').addEventListener('click', expandAll);
+            document.getElementById('ctxCollapse').addEventListener('click', collapseAll);
+            document.getElementById('ctxProperties').addEventListener('click', showProperties);
+            
+            // Modal de renombrar
+            document.getElementById('renameConfirm').addEventListener('click', renameItem);
+            document.getElementById('renameCancel').addEventListener('click', hideRenameModal);
+            document.getElementById('renameInput').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') renameItem();
+            });
+            
+            // Modal de renombrado masivo
+            document.getElementById('bulkPreviewBtn').addEventListener('click', previewBulkRename);
+            document.getElementById('bulkConfirm').addEventListener('click', applyBulkRename);
+            document.getElementById('bulkCancel').addEventListener('click', hideBulkRenameModal);
+            document.getElementById('bulkFindText').addEventListener('input', previewBulkRename);
+            document.getElementById('bulkReplaceText').addEventListener('input', previewBulkRename);
+            document.getElementById('bulkCaseSensitive').addEventListener('change', previewBulkRename);
+            
+            // Modal de nueva carpeta
+            document.getElementById('newFolderConfirm').addEventListener('click', createNewFolder);
+            document.getElementById('newFolderCancel').addEventListener('click', hideNewFolderModal);
+            document.getElementById('newFolderName').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') createNewFolder();
+            });
+            
+            // Cerrar modales haciendo clic fuera
+            document.querySelectorAll('.modal-overlay').forEach(modal => {
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) {
+                        if (modal.id === 'renameModal') hideRenameModal();
+                        if (modal.id === 'bulkRenameModal') hideBulkRenameModal();
+                        if (modal.id === 'newFolderModal') hideNewFolderModal();
+                    }
+                });
+            });
+        }
+
+        // Configurar drag and drop
+        function setupDragAndDrop() {
+            const previewContent = document.getElementById('previewContent');
+            
+            previewContent.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                previewContent.style.backgroundColor = '#e9ecef';
+            });
+            
+            previewContent.addEventListener('dragleave', () => {
+                previewContent.style.backgroundColor = '';
+            });
+            
+            previewContent.addEventListener('drop', async (e) => {
+                e.preventDefault();
+                previewContent.style.backgroundColor = '';
+                
+                if (!currentDirectoryHandle) {
+                    showNotification('Primero selecciona una carpeta de destino', 'warning');
+                    return;
+                }
+                
+                const items = e.dataTransfer.items;
+                let uploadedCount = 0;
+                
+                for (let i = 0; i < items.length; i++) {
+                    const item = items[i];
+                    if (item.kind === 'file') {
+                        const file = item.getAsFile();
+                        const success = await saveFileToDirectory(file);
+                        if (success) uploadedCount++;
+                    }
+                }
+                
+                await refreshFolder();
+                showNotification(`${uploadedCount} archivo(s) subido(s) correctamente`, 'success');
+            });
+        }
+
+        // Cargar datos del localStorage
+        function loadFromLocalStorage() {
+            const savedPath = localStorage.getItem('lastFolderPath');
+            if (savedPath) {
+                document.getElementById('pathText').textContent = savedPath;
+            }
+        }
+
+        // Seleccionar carpeta
+        async function selectFolder() {
+            try {
+                showLoading('Accediendo a la carpeta...');
+                
+                // Usar la File System Access API
+                const directoryHandle = await window.showDirectoryPicker();
+                
+                // Guardar el handle del directorio
+                currentDirectoryHandle = directoryHandle;
+                
+                // Actualizar la interfaz
+                document.getElementById('pathText').textContent = directoryHandle.name;
+                localStorage.setItem('lastFolderPath', directoryHandle.name);
+                
+                // Cargar contenido de la carpeta
+                await loadFolderContents();
+                
+                hideLoading();
+                showNotification(`Carpeta "${directoryHandle.name}" cargada`, 'success');
+            } catch (error) {
+                hideLoading();
+                if (error.name !== 'AbortError') {
+                    showNotification('Error al seleccionar la carpeta', 'error');
+                    console.error('Error:', error);
+                }
+            }
+        }
+
+        // Cargar contenido de la carpeta
+        async function loadFolderContents() {
+            if (!currentDirectoryHandle) return;
+            
+            showLoading('Explorando carpeta...');
+            
+            // Reiniciar arrays
+            fileEntries = [];
+            selectedFiles.clear();
+            folderStructure = { 
+                name: currentDirectoryHandle.name, 
+                handle: currentDirectoryHandle,
+                path: '', 
+                children: [],
+                isExpanded: true,
+                isFile: false,
+                level: 0
+            };
+            
+            // Recorrer la carpeta actual
+            await traverseDirectory(currentDirectoryHandle, folderStructure, '', 0);
+            
+            // Renderizar estructura de carpetas
+            renderFolderTree();
+            
+            // Actualizar estadísticas
+            updateStatistics();
+            
+            hideLoading();
+        }
+
+        // Recorrer directorio
+        async function traverseDirectory(directoryHandle, parentNode, path = '', level = 0) {
+            const currentPath = path ? `${path}/${directoryHandle.name}` : directoryHandle.name;
+            
+            try {
+                for await (const entry of directoryHandle.values()) {
+                    if (entry.kind === 'directory') {
+                        // Es una carpeta
+                        const folderNode = {
+                            name: entry.name,
+                            path: currentPath,
+                            handle: entry,
+                            children: [],
+                            isExpanded: false,
+                            isFile: false,
+                            parent: parentNode,
+                            level: level + 1
+                        };
+                        parentNode.children.push(folderNode);
+                        
+                    } else {
+                        // Es un archivo
+                        const file = await entry.getFile();
+                        const fileInfo = {
+                            name: entry.name,
+                            path: currentPath,
+                            handle: entry,
+                            isFile: true,
+                            size: file.size,
+                            type: file.type,
+                            lastModified: file.lastModified,
+                            parent: parentNode,
+                            level: level + 1,
+                            selected: false
+                        };
+                        
+                        parentNode.children.push(fileInfo);
+                        fileEntries.push(fileInfo);
+                    }
+                }
+            } catch (error) {
+                console.warn('Error al acceder a carpeta:', error);
+            }
+        }
+
+        // Renderizar árbol de carpetas
+        function renderFolderTree() {
+            const folderTree = document.getElementById('folderTree');
+            folderTree.innerHTML = '';
+            
+            if (!folderStructure.children.length) {
+                folderTree.innerHTML = `
+                    <div class="empty-state" style="padding: 20px;">
+                        <i class="fas fa-folder"></i>
+                        <p>Carpeta vacía</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Función recursiva para renderizar
+            function renderNode(node, container, level = 0) {
+                const nodeElement = document.createElement('div');
+                nodeElement.className = node.isFile ? 'file-item' : 'folder-item';
+                nodeElement.dataset.path = node.path;
+                nodeElement.dataset.name = node.name;
+                nodeElement.style.paddingLeft = `${20 + level * 20}px`;
+                nodeElement.title = node.name;
+                
+                if (node.selected) {
+                    nodeElement.classList.add('selected');
+                }
+                
+                if (node.isFile) {
+                    // Es un archivo
+                    const extension = node.name.split('.').pop().toLowerCase();
+                    const icon = getFileIcon(extension);
+                    
+                    nodeElement.innerHTML = `
+                        <div class="item-content">
+                            <input type="checkbox" class="checkbox" ${node.selected ? 'checked' : ''}>
+                            <span class="item-icon">${icon}</span>
+                            <span class="item-text">${node.name}</span>
+                        </div>
+                    `;
+                    
+                    // Eventos para archivos
+                    const checkbox = nodeElement.querySelector('.checkbox');
+                    checkbox.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        toggleFileSelection(node, checkbox.checked);
+                    });
+                    
+                    nodeElement.addEventListener('click', (e) => {
+                        if (e.target !== checkbox) {
+                            selectItem(node, nodeElement, e);
+                        }
+                    });
+                    
+                    nodeElement.addEventListener('contextmenu', (e) => showContextMenu(e, node, nodeElement));
+                    nodeElement.addEventListener('dblclick', () => downloadFile(node.name));
+                    
+                } else {
+                    // Es una carpeta
+                    const fileCount = countFilesInNode(node);
+                    
+                    nodeElement.innerHTML = `
+                        <div class="item-content">
+                            <span class="item-icon">
+                                <i class="fas fa-chevron-right"></i>
+                            </span>
+                            <span class="item-text">${node.name}</span>
+                            <div class="item-count">${fileCount}</div>
+                        </div>
+                    `;
+                    
+                    if (node.isExpanded) {
+                        nodeElement.classList.add('expanded');
+                        nodeElement.querySelector('.item-icon i').className = 'fas fa-chevron-down';
+                    }
+                    
+                    // Eventos para carpetas
+                    nodeElement.addEventListener('click', (e) => {
+                        if (!e.target.classList.contains('item-count')) {
+                            toggleFolderExpansion(node, nodeElement);
+                        }
+                    });
+                    
+                    nodeElement.addEventListener('contextmenu', (e) => showContextMenu(e, node, nodeElement));
+                    nodeElement.addEventListener('dblclick', () => navigateToFolder(node));
+                    
+                    // Crear contenedor para hijos
+                    const childrenContainer = document.createElement('div');
+                    childrenContainer.className = 'children-container';
+                    if (node.isExpanded) {
+                        childrenContainer.classList.add('expanded');
+                    }
+                    
+                    // Renderizar hijos si existen
+                    if (node.children && node.children.length > 0) {
+                        node.children.forEach(child => {
+                            renderNode(child, childrenContainer, level + 1);
+                        });
+                    }
+                    
+                    // Agregar todo al DOM
+                    container.appendChild(nodeElement);
+                    if (childrenContainer.children.length > 0) {
+                        container.appendChild(childrenContainer);
+                    }
+                    return;
+                }
+                
+                container.appendChild(nodeElement);
+            }
+            
+            // Renderizar carpetas principales
+            folderStructure.children.forEach(child => {
+                renderNode(child, folderTree);
+            });
+            
+            updateSelectedCount();
+        }
+
+        // Contar archivos en un nodo
+        function countFilesInNode(node) {
+            let count = 0;
+            
+            function countRecursive(n) {
+                if (n.isFile) {
+                    count++;
+                } else {
+                    n.children.forEach(child => {
+                        if (child.isFile) {
+                            count++;
+                        } else {
+                            countRecursive(child);
+                        }
+                    });
+                }
+            }
+            
+            if (node.children) {
+                countRecursive(node);
+            }
+            return count;
+        }
+
+        // Obtener icono según extensión
+        function getFileIcon(extension) {
+            const iconMap = {
+                pdf: '📕',
+                txt: '📄',
+                doc: '📝',
+                docx: '📝',
+                xls: '📊',
+                xlsx: '📊',
+                ppt: '📽',
+                pptx: '📽',
+                jpg: '🖼',
+                jpeg: '🖼',
+                png: '🖼',
+                gif: '🖼',
+                mp3: '🎵',
+                mp4: '🎬',
+                avi: '🎬',
+                zip: '📦',
+                rar: '📦',
+                exe: '⚙️',
+                js: '📜',
+                html: '🌐',
+                css: '🎨',
+                json: '🔧'
+            };
+            
+            return iconMap[extension] || '📄';
+        }
+
+        // Alternar expansión de carpeta
+        function toggleFolderExpansion(node, element) {
+            node.isExpanded = !node.isExpanded;
+            
+            if (node.isExpanded) {
+                element.classList.add('expanded');
+                element.querySelector('.item-icon i').className = 'fas fa-chevron-down';
+                
+                // Si no tiene hijos cargados, cargarlos
+                if (!node.children || node.children.length === 0) {
+                    loadFolderChildren(node).then(() => {
+                        renderFolderTree();
+                    });
+                } else {
+                    renderFolderTree();
+                }
+            } else {
+                element.classList.remove('expanded');
+                element.querySelector('.item-icon i').className = 'fas fa-chevron-right';
+                renderFolderTree();
+            }
+        }
+
+        // Cargar hijos de una carpeta
+        async function loadFolderChildren(folderNode) {
+            try {
+                for await (const entry of folderNode.handle.values()) {
+                    if (entry.kind === 'directory') {
+                        const childFolder = {
+                            name: entry.name,
+                            path: `${folderNode.path}/${entry.name}`,
+                            handle: entry,
+                            children: [],
+                            isExpanded: false,
+                            isFile: false,
+                            parent: folderNode,
+                            level: folderNode.level + 1
+                        };
+                        folderNode.children.push(childFolder);
+                    } else {
+                        const file = await entry.getFile();
+                        const fileInfo = {
+                            name: entry.name,
+                            path: `${folderNode.path}/${entry.name}`,
+                            handle: entry,
+                            isFile: true,
+                            size: file.size,
+                            type: file.type,
+                            lastModified: file.lastModified,
+                            parent: folderNode,
+                            level: folderNode.level + 1,
+                            selected: false
+                        };
+                        
+                        folderNode.children.push(fileInfo);
+                        fileEntries.push(fileInfo);
+                    }
+                }
+            } catch (error) {
+                console.warn('Error al cargar subcarpeta:', error);
+            }
+        }
+
+        // Expandir todas las carpetas
+        function expandAll() {
+            function expandRecursive(node) {
+                node.isExpanded = true;
+                if (node.children) {
+                    node.children.forEach(child => {
+                        if (!child.isFile) {
+                            expandRecursive(child);
+                        }
+                    });
+                }
+            }
+            
+            expandRecursive(folderStructure);
+            renderFolderTree();
+            hideContextMenu();
+            showNotification('Todas las carpetas expandidas', 'success');
+        }
+
+        // Colapsar todas las carpetas
+        function collapseAll() {
+            function collapseRecursive(node) {
+                node.isExpanded = false;
+                if (node.children) {
+                    node.children.forEach(child => {
+                        if (!child.isFile) {
+                            collapseRecursive(child);
+                        }
+                    });
+                }
+            }
+            
+            collapseRecursive(folderStructure);
+            renderFolderTree();
+            hideContextMenu();
+            showNotification('Todas las carpetas colapsadas', 'success');
+        }
+
+        // Seleccionar elemento
+        async function selectItem(item, element, event) {
+            if (event) event.stopPropagation();
+            
+            // Quitar selección anterior
+            document.querySelectorAll('.folder-item.selected, .file-item.selected').forEach(el => {
+                el.classList.remove('selected');
+            });
+            
+            // Aplicar selección
+            if (element) {
+                element.classList.add('selected');
+            }
+            
+            selectedItem = item;
+            
+            if (item.isFile) {
+                await selectFile(item);
+            } else {
+                selectFolderItem(item);
+            }
+        }
+
+        // Alternar selección de archivo
+        function toggleFileSelection(file, isSelected) {
+            file.selected = isSelected;
+            if (isSelected) {
+                selectedFiles.add(file);
+            } else {
+                selectedFiles.delete(file);
+            }
+            updateSelectedCount();
+        }
+
+        // Seleccionar todos los archivos
+        function selectAllFiles() {
+            selectedFiles.clear();
+            fileEntries.forEach(file => {
+                file.selected = true;
+                selectedFiles.add(file);
+            });
+            renderFolderTree();
+            showNotification(`${fileEntries.length} archivos seleccionados`, 'success');
+        }
+
+        // Deseleccionar todos los archivos
+        function deselectAllFiles() {
+            selectedFiles.clear();
+            fileEntries.forEach(file => {
+                file.selected = false;
+            });
+            renderFolderTree();
+            showNotification('Todos los archivos deseleccionados', 'info');
+        }
+
+        // Actualizar contador de seleccionados
+        function updateSelectedCount() {
+            const count = selectedFiles.size;
+            document.getElementById('selectedCount').textContent = count;
+            document.getElementById('selectedFilesCount').textContent = `${count} archivos seleccionados`;
+        }
+
+        // Alternar selección desde menú contextual
+        function toggleSelection() {
+            if (!selectedItem || !selectedItem.isFile) return;
+            
+            const isSelected = !selectedItem.selected;
+            selectedItem.selected = isSelected;
+            
+            if (isSelected) {
+                selectedFiles.add(selectedItem);
+            } else {
+                selectedFiles.delete(selectedItem);
+            }
+            
+            renderFolderTree();
+            updateSelectedCount();
+            hideContextMenu();
+        }
+
+        // Seleccionar archivo
+        async function selectFile(file) {
+            try {
+                showLoading('Cargando archivo...');
+                
+                // Obtener información del archivo
+                const fileData = await file.handle.getFile();
+                
+                // Mostrar información del archivo
+                showFileInfo(fileData, file.path);
+                
+                // Mostrar botones de acción
+                showFileActions(file);
+                
+                // Mostrar vista previa
+                await showFilePreview(fileData);
+                
+                hideLoading();
+            } catch (error) {
+                hideLoading();
+                showNotification('Error al cargar el archivo', 'error');
+                console.error('Error:', error);
+            }
+        }
+
+        // Seleccionar carpeta
+        function selectFolderItem(folder) {
+            const fileInfo = document.getElementById('fileInfo');
+            const previewContent = document.getElementById('previewContent');
+            
+            // Ocultar información de archivo
+            fileInfo.style.display = 'none';
+            
+            // Mostrar información de carpeta
+            previewContent.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-folder" style="color: #ffc107; font-size: 4rem;"></i>
+                    <h3>${folder.name}</h3>
+                    <p>Carpeta seleccionada</p>
+                    <p style="margin-top: 10px;">
+                        <strong>Archivos:</strong> ${countFilesInNode(folder)}<br>
+                        <strong>Subcarpetas:</strong> ${folder.children ? folder.children.filter(c => !c.isFile).length : 0}
+                    </p>
+                    <div class="file-actions" style="margin-top: 20px;">
+                        <button class="action-btn action-rename" onclick="showRenameModal()">
+                            <i class="fas fa-edit"></i> Renombrar Carpeta
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Navegar a carpeta
+        async function navigateToFolder(node) {
+            if (!node.handle) return;
+            
+            try {
+                currentDirectoryHandle = node.handle;
+                await loadFolderContents();
+                showNotification(`Navegando a: ${node.name}`, 'info');
+            } catch (error) {
+                showNotification('Error al navegar a la carpeta', 'error');
+                console.error('Error:', error);
+            }
+        }
+
+        // Mostrar información del archivo
+        function showFileInfo(fileData, path) {
+            const fileInfo = document.getElementById('fileInfo');
+            const infoGrid = document.getElementById('infoGrid');
+            
+            // Formatear tamaño
+            const formatSize = (bytes) => {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            };
+            
+            // Formatear fecha
+            const formatDate = (date) => {
+                return new Date(date).toLocaleDateString('es-ES', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            };
+            
+            // Obtener extensión
+            const extension = fileData.name.split('.').pop().toUpperCase();
+            const fileNameWithoutExt = fileData.name.substring(0, fileData.name.lastIndexOf('.'));
+            
+            infoGrid.innerHTML = `
+                <div class="info-item">
+                    <div class="info-label">Nombre</div>
+                    <div class="info-value">${fileNameWithoutExt}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Extensión</div>
+                    <div class="info-value">.${extension.toLowerCase()}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Tipo</div>
+                    <div class="info-value">${fileData.type || 'Desconocido'}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Tamaño</div>
+                    <div class="info-value">${formatSize(fileData.size)}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Modificado</div>
+                    <div class="info-value">${formatDate(fileData.lastModified)}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Ruta</div>
+                    <div class="info-value">${path}/${fileData.name}</div>
+                </div>
+            `;
+            
+            fileInfo.style.display = 'block';
+        }
+
+        // Mostrar botones de acción
+        function showFileActions(file) {
+            const fileActions = document.getElementById('fileActions');
+            fileActions.innerHTML = `
+                <button class="action-btn action-rename" onclick="showRenameModal()">
+                    <i class="fas fa-edit"></i> Renombrar
+                </button>
+                <button class="action-btn action-download" onclick="downloadFile('${file.name}')">
+                    <i class="fas fa-download"></i> Descargar
+                </button>
+                <button class="action-btn action-bulk" onclick="addToBulkSelection('${file.name}')">
+                    <i class="fas fa-check-square"></i> Seleccionar para Masivo
+                </button>
+            `;
+        }
+
+        // Añadir a selección masiva
+        function addToBulkSelection(fileName) {
+            const file = fileEntries.find(f => f.name === fileName);
+            if (file) {
+                file.selected = true;
+                selectedFiles.add(file);
+                renderFolderTree();
+                updateSelectedCount();
+                showNotification('Archivo añadido a la selección masiva', 'success');
+            }
+        }
+
+        // Mostrar vista previa
+        async function showFilePreview(fileData) {
+            const previewContent = document.getElementById('previewContent');
+            previewContent.innerHTML = '';
+            
+            const extension = fileData.name.split('.').pop().toLowerCase();
+            const mimeType = fileData.type;
+            
+            if (mimeType.startsWith('image/')) {
+                const img = document.createElement('img');
+                img.src = URL.createObjectURL(fileData);
+                img.style.maxWidth = '100%';
+                img.style.maxHeight = '500px';
+                img.style.objectFit = 'contain';
+                img.style.borderRadius = '5px';
+                previewContent.appendChild(img);
+            } else if (mimeType.startsWith('text/')) {
+                const text = await fileData.text();
+                const pre = document.createElement('pre');
+                pre.textContent = text;
+                pre.style.whiteSpace = 'pre-wrap';
+                pre.style.wordBreak = 'break-word';
+                pre.style.padding = '20px';
+                pre.style.background = '#f8f9fa';
+                pre.style.borderRadius = '5px';
+                pre.style.maxHeight = '500px';
+                pre.style.overflow = 'auto';
+                pre.style.fontFamily = 'monospace';
+                previewContent.appendChild(pre);
+            } else {
+                previewContent.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-file" style="font-size: 4rem;"></i>
+                        <h3>${fileData.name}</h3>
+                        <p>Vista previa no disponible para este tipo de archivo</p>
+                        <button class="action-btn action-download" onclick="downloadFile('${fileData.name}')" style="margin-top: 20px;">
+                            <i class="fas fa-download"></i> Descargar Archivo
+                        </button>
+                    </div>
+                `;
+            }
+        }
+
+        // Actualizar estadísticas
+        function updateStatistics() {
+            const folders = countFolders(folderStructure);
+            const files = fileEntries.length;
+            
+            document.getElementById('totalFolders').textContent = folders;
+            document.getElementById('totalFiles').textContent = files;
+            updateSelectedCount();
+        }
+
+        // Contar carpetas
+        function countFolders(node) {
+            let count = 0;
+            
+            function countRecursive(n) {
+                if (!n.isFile) {
+                    count++;
+                    if (n.children) {
+                        n.children.forEach(child => {
+                            if (!child.isFile) {
+                                countRecursive(child);
+                            }
+                        });
+                    }
+                }
+            }
+            
+            if (node.children) {
+                node.children.forEach(child => {
+                    if (!child.isFile) {
+                        countRecursive(child);
+                    }
+                });
+            }
+            
+            return count;
+        }
+
+        // Mostrar modal para nueva carpeta
+        function showNewFolderModal() {
+            if (!currentDirectoryHandle) {
+                showNotification('Primero selecciona una carpeta', 'warning');
+                return;
+            }
+            
+            document.getElementById('newFolderName').value = '';
+            document.getElementById('newFolderModal').style.display = 'flex';
+            document.getElementById('newFolderName').focus();
+        }
+
+        // Ocultar modal de nueva carpeta
+        function hideNewFolderModal() {
+            document.getElementById('newFolderModal').style.display = 'none';
+        }
+
+        // Crear nueva carpeta
+        async function createNewFolder() {
+            const folderName = document.getElementById('newFolderName').value.trim();
+            if (!folderName) return;
+            
+            try {
+                showLoading('Creando carpeta...');
+                await currentDirectoryHandle.getDirectoryHandle(folderName, { create: true });
+                hideNewFolderModal();
+                await refreshFolder();
+                showNotification(`Carpeta "${folderName}" creada`, 'success');
+            } catch (error) {
+                hideLoading();
+                showNotification('Error al crear la carpeta', 'error');
+                console.error('Error:', error);
+            }
+        }
+
+        // Refrescar carpeta
+        async function refreshFolder() {
+            if (!currentDirectoryHandle) {
+                showNotification('Primero selecciona una carpeta', 'warning');
+                return;
+            }
+            
+            await loadFolderContents();
+            showNotification('Carpeta actualizada', 'success');
+        }
+
+        // Guardar archivo en directorio
+        async function saveFileToDirectory(file) {
+            try {
+                const fileHandle = await currentDirectoryHandle.getFileHandle(file.name, { create: true });
+                const writable = await fileHandle.createWritable();
+                await writable.write(file);
+                await writable.close();
+                return true;
+            } catch (error) {
+                console.error('Error al guardar archivo:', error);
+                return false;
+            }
+        }
+
+        // Mostrar menú contextual
+        function showContextMenu(event, item, element) {
+            event.preventDefault();
+            event.stopPropagation();
+            
+            // Seleccionar el item primero
+            selectItem(item, element, event);
+            
+            // Mostrar menú contextual
+            const contextMenu = document.getElementById('contextMenu');
+            contextMenu.style.left = event.pageX + 'px';
+            contextMenu.style.top = event.pageY + 'px';
+            contextMenu.classList.add('active');
+        }
+
+        // Ocultar menú contextual
+        function hideContextMenu() {
+            document.getElementById('contextMenu').classList.remove('active');
+        }
+
+        // Abrir elemento seleccionado
+        function openSelectedItem() {
+            if (!selectedItem) return;
+            
+            if (selectedItem.isFile) {
+                downloadFile(selectedItem.name);
+            } else {
+                navigateToFolder(selectedItem);
+            }
+            
+            hideContextMenu();
+        }
+
+        // Mostrar modal para renombrar
+        function showRenameModal() {
+            if (!selectedItem) {
+                showNotification('Primero selecciona un archivo o carpeta', 'warning');
+                hideContextMenu();
+                return;
+            }
+            
+            document.getElementById('renamePrompt').textContent = 
+                `Renombrar "${selectedItem.name}":`;
+            document.getElementById('renameInput').value = selectedItem.name;
+            
+            // Seleccionar nombre sin extensión para archivos
+            if (selectedItem.isFile) {
+                const lastDotIndex = selectedItem.name.lastIndexOf('.');
+                if (lastDotIndex > 0) {
+                    setTimeout(() => {
+                        document.getElementById('renameInput').setSelectionRange(0, lastDotIndex);
+                    }, 100);
+                }
+            }
+            
+            document.getElementById('renameModal').style.display = 'flex';
+            document.getElementById('renameInput').focus();
+            
+            hideContextMenu();
+        }
+
+        // Ocultar modal de renombrar
+        function hideRenameModal() {
+            document.getElementById('renameModal').style.display = 'none';
+        }
+
+        // Renombrar elemento
+        async function renameItem() {
+            if (!selectedItem) {
+                showNotification('No hay elemento seleccionado', 'warning');
+                return;
+            }
+            
+            const newName = document.getElementById('renameInput').value.trim();
+            if (!newName || newName === selectedItem.name) {
+                hideRenameModal();
+                return;
+            }
+            
+            try {
+                showLoading('Renombrando...');
+                
+                if (selectedItem.isFile) {
+                    await renameFile(selectedItem, newName);
+                } else {
+                    await renameFolder(selectedItem, newName);
+                }
+                
+                hideLoading();
+                hideRenameModal();
+                await refreshFolder();
+                showNotification(`Renombrado a "${newName}"`, 'success');
+                
+            } catch (error) {
+                hideLoading();
+                hideRenameModal();
+                showNotification(`Error al renombrar: ${error.message}`, 'error');
+                console.error('Error:', error);
+            }
+        }
+
+        // Renombrar archivo
+        async function renameFile(fileItem, newName) {
+            try {
+                // Verificar si el archivo existe
+                const originalFile = await fileItem.handle.getFile();
+                
+                // Crear nuevo archivo con el nuevo nombre
+                const newFileHandle = await currentDirectoryHandle.getFileHandle(newName, { create: true });
+                const writable = await newFileHandle.createWritable();
+                
+                // Copiar contenido
+                const reader = originalFile.stream().getReader();
+                
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    await writable.write(value);
+                }
+                
+                await writable.close();
+                reader.releaseLock();
+                
+                // Eliminar archivo original
+                await currentDirectoryHandle.removeEntry(fileItem.name);
+                
+            } catch (error) {
+                throw new Error(`No se pudo renombrar el archivo: ${error.message}`);
+            }
+        }
+
+        // Renombrar carpeta
+        async function renameFolder(folderItem, newName) {
+            try {
+                // Para carpetas, intentamos renombrar directamente
+                // Nota: La API actual no soporta renombrar carpetas directamente
+                // Esta es una implementación simplificada
+                
+                // Crear nueva carpeta
+                const newFolderHandle = await currentDirectoryHandle.getDirectoryHandle(newName, { create: true });
+                
+                // Mostrar mensaje informativo
+                showNotification('Para renombrar carpetas con contenido, usa el explorador de archivos', 'info');
+                
+                // Eliminar carpeta original si está vacía
+                try {
+                    await currentDirectoryHandle.removeEntry(folderItem.name, { recursive: false });
+                } catch (removeError) {
+                    // Ignorar si la carpeta no está vacía
+                }
+                
+            } catch (error) {
+                throw new Error(`No se pudo renombrar la carpeta: ${error.message}`);
+            }
+        }
+
+        // Mostrar modal para renombrado masivo
+        function showBulkRenameModal() {
+            if (selectedFiles.size === 0) {
+                showNotification('Primero selecciona archivos para renombrar', 'warning');
+                return;
+            }
+            
+            document.getElementById('bulkFileCount').textContent = selectedFiles.size;
+            document.getElementById('bulkFindText').value = '';
+            document.getElementById('bulkReplaceText').value = '';
+            document.getElementById('bulkCaseSensitive').checked = false;
+            document.getElementById('bulkPreview').style.display = 'none';
+            
+            document.getElementById('bulkRenameModal').style.display = 'flex';
+            document.getElementById('bulkFindText').focus();
+        }
+
+        // Ocultar modal de renombrado masivo
+        function hideBulkRenameModal() {
+            document.getElementById('bulkRenameModal').style.display = 'none';
+        }
+
+        // Vista previa de renombrado masivo
+        function previewBulkRename() {
+            const findText = document.getElementById('bulkFindText').value;
+            const replaceText = document.getElementById('bulkReplaceText').value;
+            const caseSensitive = document.getElementById('bulkCaseSensitive').checked;
+            
+            if (!findText) {
+                document.getElementById('bulkPreview').style.display = 'none';
+                return;
+            }
+            
+            const previewContent = document.getElementById('bulkPreviewContent');
+            previewContent.innerHTML = '';
+            
+            let changesCount = 0;
+            
+            selectedFiles.forEach(file => {
+                let newName = file.name;
+                
+                if (caseSensitive) {
+                    newName = file.name.replaceAll(findText, replaceText);
+                } else {
+                    const regex = new RegExp(findText, 'gi');
+                    newName = file.name.replace(regex, replaceText);
+                }
+                
+                if (newName !== file.name) {
+                    changesCount++;
+                    previewContent.innerHTML += `
+                        <div class="bulk-preview-item">
+                            <span style="color: #dc3545;">${file.name}</span> → 
+                            <span style="color: #28a745;">${newName}</span>
+                        </div>
+                    `;
+                }
+            });
+            
+            if (changesCount > 0) {
+                document.getElementById('bulkPreview').style.display = 'block';
+                previewContent.innerHTML = `<p><strong>${changesCount} archivos serán modificados:</strong></p>` + previewContent.innerHTML;
+            } else {
+                document.getElementById('bulkPreview').style.display = 'none';
+            }
+        }
+
+        // Aplicar renombrado masivo
+        async function applyBulkRename() {
+            const findText = document.getElementById('bulkFindText').value;
+            const replaceText = document.getElementById('bulkReplaceText').value;
+            const caseSensitive = document.getElementById('bulkCaseSensitive').checked;
+            
+            if (!findText) {
+                showNotification('Ingresa texto a buscar', 'warning');
+                return;
+            }
+            
+            if (selectedFiles.size === 0) {
+                showNotification('No hay archivos seleccionados', 'warning');
+                return;
+            }
+            
+            try {
+                showLoading(`Renombrando ${selectedFiles.size} archivos...`);
+                
+                let renamedCount = 0;
+                let errorCount = 0;
+                
+                // Convertir Set a Array para procesar
+                const filesArray = Array.from(selectedFiles);
+                
+                for (const file of filesArray) {
+                    try {
+                        let newName = file.name;
+                        
+                        if (caseSensitive) {
+                            newName = file.name.replaceAll(findText, replaceText);
+                        } else {
+                            const regex = new RegExp(findText, 'gi');
+                            newName = file.name.replace(regex, replaceText);
+                        }
+                        
+                        if (newName !== file.name) {
+                            await renameFile(file, newName);
+                            renamedCount++;
+                        }
+                    } catch (error) {
+                        errorCount++;
+                        console.error(`Error renombrando ${file.name}:`, error);
+                    }
+                }
+                
+                hideLoading();
+                hideBulkRenameModal();
+                
+                await refreshFolder();
+                
+                let message = `Renombrado completado: ${renamedCount} archivos modificados`;
+                if (errorCount > 0) {
+                    message += `, ${errorCount} errores`;
+                }
+                
+                showNotification(message, errorCount > 0 ? 'warning' : 'success');
+                
+            } catch (error) {
+                hideLoading();
+                showNotification(`Error en renombrado masivo: ${error.message}`, 'error');
+                console.error('Error:', error);
+            }
+        }
+
+        // Mostrar propiedades
+        function showProperties() {
+            if (!selectedItem) return;
+            
+            const size = selectedItem.isFile ? formatSize(selectedItem.size || 0) : 'N/A';
+            const type = selectedItem.isFile ? 'Archivo' : 'Carpeta';
+            const itemCount = selectedItem.isFile ? '1 archivo' : `${countFilesInNode(selectedItem)} archivos`;
+            
+            alert(`Propiedades de "${selectedItem.name}":\n\n` +
+                  `Tipo: ${type}\n` +
+                  `Ruta: ${selectedItem.path}/${selectedItem.name}\n` +
+                  `Tamaño: ${size}\n` +
+                  `Contenido: ${itemCount}`);
+            
+            hideContextMenu();
+        }
+
+        // Descargar archivo
+        async function downloadFile(fileName) {
+            try {
+                if (!currentDirectoryHandle) return;
+                
+                const fileHandle = await currentDirectoryHandle.getFileHandle(fileName);
+                const file = await fileHandle.getFile();
+                
+                const url = URL.createObjectURL(file);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = fileName;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                showNotification(`"${fileName}" descargado`, 'success');
+            } catch (error) {
+                showNotification('Error al descargar', 'error');
+                console.error('Error:', error);
+            }
+        }
+
+        // Mostrar notificación
+        function showNotification(message, type = 'info') {
+            const notification = document.getElementById('notification');
+            const notificationText = document.getElementById('notificationText');
+            
+            notificationText.textContent = message;
+            
+            switch (type) {
+                case 'success':
+                    notification.style.background = '#28a745';
+                    break;
+                case 'error':
+                    notification.style.background = '#dc3545';
+                    break;
+                case 'warning':
+                    notification.style.background = '#ffc107';
+                    break;
+                default:
+                    notification.style.background = '#17a2b8';
+            }
+            
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        // Mostrar pantalla de carga
+        function showLoading(message = 'Cargando...') {
+            const loading = document.getElementById('loading');
+            const loadingText = document.getElementById('loadingText');
+            
+            loadingText.textContent = message;
+            loading.classList.add('active');
+        }
+
+        // Ocultar pantalla de carga
+        function hideLoading() {
+            document.getElementById('loading').classList.remove('active');
+        }
+
+        // Formatear tamaño
+        function formatSize(bytes) {
+            if (bytes < 1024) return bytes + ' Bytes';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+            return (bytes / (1024 * 1024 * 1024)).toFixed(1) + ' GB';
+        }
+    </script>
+</body>
+</html>
