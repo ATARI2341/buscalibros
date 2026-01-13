@@ -2697,21 +2697,25 @@
             return {
                 'Z-Library': `https://z-library.ec/s/${query.toLowerCase().replace(/\s+/g, '%20')}`,
                 'LibGen': `https://libgen.bz/index.php?req=${queryEncoded}&columns%5B%5D=t&columns%5B%5D=a&columns%5B%5D=s&columns%5B%5D=y&columns%5B%5D=p&columns%5B%5D=i&objects%5B%5D=f&objects%5B%5D=e&objects%5B%5D=s&objects%5B%5D=a&objects%5B%5D=p&objects%5B%5D=w&topics%5B%5D=l&topics%5B%5D=c&topics%5B%5D=f&topics%5B%5D=a&topics%5B%5D=m&topics%5B%5D=r&topics%5B%5D=s&res=25&filesuns=all`,
+                'WeLib': `https://welib.org/search?q=${queryEncoded}`,
                 'audiobookbay': `https://audiobookbay.lu/?s=${queryEncoded}`,
                 'YouTube': `https://www.youtube.com/results?search_query=${queryEncoded}+audiolibro`,
                 'Internet Archive': `https://archive.org/search.php?query=${queryEncoded}+audio`,
                 'Librivox': `https://librivox.org/search?q=${queryEncoded}`,
                 'Google Books': `https://www.google.com/search?q=${queryEncoded}+libro`,
+                
 
 
 
                 'Z-Library por autor': `https://z-library.ec/s/${queryAutor.toLowerCase().replace(/\s+/g, '%20')}`,
                 'LibGen por autor': `https://libgen.bz/index.php?req=${queryEncoded2}&columns%5B%5D=t&columns%5B%5D=a&columns%5B%5D=s&columns%5B%5D=y&columns%5B%5D=p&columns%5B%5D=i&objects%5B%5D=f&objects%5B%5D=e&objects%5B%5D=s&objects%5B%5D=a&objects%5B%5D=p&objects%5B%5D=w&topics%5B%5D=l&topics%5B%5D=c&topics%5B%5D=f&topics%5B%5D=a&topics%5B%5D=m&topics%5B%5D=r&topics%5B%5D=s&res=25&filesuns=all`,
+                'WeLib por autor': `https://welib.org/search?q=${queryEncoded2}`,
                 'audiobookbay por autor': `https://audiobookbay.lu/?s=${queryEncoded2}`,
                 'YouTube por autor': `https://www.youtube.com/results?search_query=${queryEncoded2}+audiolibro`,
                 'Internet Archive por autor': `https://archive.org/search.php?query=${queryEncoded2}+audio`,
                 'Librivox por autor': `https://librivox.org/search?q=${queryEncoded2}`,
                 'Google Books por autor': `https://www.google.com/search?q=${queryEncoded2}+libro`,
+                
             };
         }
 
@@ -2737,6 +2741,7 @@
             const iconos = {
                 'Z-Library': '📥',
                 'LibGen': '📚',
+                'WeLib': '📖',
                 'audiobookbay': '🔊',
                 'YouTube': '🎥',
                 'Internet Archive': '🏛️',
@@ -2746,6 +2751,7 @@
 
                 'Z-Library por autor': '📥',
                 'LibGen por autor': '📚',
+                'WeLib por autor': '📖',
                 'audiobookbay por autor': '🔊',
                 'YouTube por autor': '🎥',
                 'Internet Archive por autor': '🏛️',
