@@ -38,6 +38,17 @@ Exportación de lista en formato texto legible
 
 Guardado automático en el navegador
 
+🔄 Conversor de Formatos
+Sube un PDF, EPUB, DOCX o TXT arrastrándolo al recuadro del conversor o haciendo clic en él; la página muestra solo las conversiones posibles
+
+Conversiones disponibles: PDF→TXT, PDF→EPUB, EPUB→TXT, EPUB→PDF, DOCX→TXT y TXT→EPUB
+
+Un solo botón "Convertir" descarga el resultado; el archivo no se guarda en la página ni en localStorage
+
+Límite de 50 MB por archivo y barra de progreso con opción de cancelar
+
+Persistencia: la biblioteca sigue en localStorage del mismo origen; actualizar la página no borra los datos. Si aparece una versión anterior tras el despliegue, recarga con Ctrl+F5. Los archivos del conversor nunca se guardan
+
 🚀 Cómo Usar
 1. Primera Búsqueda
 Ingresa el título del libro en el campo principal
@@ -83,6 +94,15 @@ Exclusividad: Un libro no puede estar marcado como ambos
 
 💾 Exportar Lista: Genera un archivo de texto con tu colección completa
 
+5. Convertir Archivos
+Arrastra el archivo al recuadro del panel "Conversor de Formatos" o haz clic para seleccionarlo
+
+Revisa las conversiones disponibles que aparecen según el tipo de archivo
+
+Selecciona el formato de destino y haz clic en "Convertir"
+
+Descarga el archivo resultante cuando termine la barra de progreso
+
 🎨 Interfaz y Diseño
 Secciones Principales
 Cabecera: Título y descripción de la aplicación
@@ -96,6 +116,8 @@ Estadísticas: Números clave de tu colección
 Grid de Libros: Tarjetas organizadas con toda la información
 
 Gestor de Etiquetas: Modal para gestionar etiquetas personalizadas
+
+Panel de Conversión: Carga de archivo, formatos destino según el tipo y descarga del resultado
 
 Características de Interfaz
 Diseño moderno con gradientes y sombras
@@ -111,7 +133,7 @@ Iconografía intuitiva para mejor experiencia
 💻 Tecnología
 HTML5 + CSS3 con diseño responsivo
 
-JavaScript Vanilla (sin dependencias externas)
+JavaScript Vanilla para la aplicación; librerías de conversión vendorizadas en vendor/ (JSZip, jsPDF y PDF.js, con sus licencias)
 
 LocalStorage para persistencia de datos
 
@@ -190,6 +212,10 @@ Sin sincronización: No hay sincronización entre dispositivos
 Límite de almacenamiento: Depende del navegador (~5-10MB)
 
 Sin búsqueda en tiempo real: Solo genera enlaces de búsqueda
+
+Conversiones basadas en texto: los PDF escaneados requieren OCR y no se procesan; EPUB→PDF y PDF→EPUB no conservan imágenes ni maquetación
+
+El convertidor necesita servir la página por HTTP(S), por ejemplo con py -m http.server 8000; abrir index.html con file:// puede bloquear PDF.js
 
 🔄 Actualizaciones Futuras
 Sincronización con la nube

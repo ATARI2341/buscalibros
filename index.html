@@ -1279,6 +1279,183 @@
             font-size: 1.1em;
         }
         
+        .converter-panel {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+            margin-bottom: 25px;
+            animation: slideIn 0.5s ease;
+        }
+
+        .converter-panel h2 {
+            color: var(--dark);
+            margin-bottom: 8px;
+            font-size: 1.8em;
+        }
+
+        .converter-panel > p {
+            color: var(--gray);
+            margin-bottom: 20px;
+        }
+
+        .converter-grid {
+            display: grid;
+            grid-template-columns: 1.4fr 1fr auto auto;
+            gap: 15px;
+            align-items: end;
+        }
+
+        .converter-field label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--dark);
+        }
+
+        .converter-field select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 14px;
+            background: white;
+        }
+
+        .converter-field select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .drop-zone {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            min-height: 110px;
+            padding: 16px;
+            border: 2px dashed var(--primary);
+            border-radius: 12px;
+            background: var(--light);
+            color: var(--dark);
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .drop-zone:hover,
+        .drop-zone:focus-within {
+            border-color: var(--purple);
+            background: rgba(52, 152, 219, 0.08);
+        }
+
+        .drop-zone.arrastrando {
+            border-color: var(--success);
+            background: rgba(39, 174, 96, 0.12);
+            transform: scale(1.01);
+        }
+
+        .drop-zone.con-archivo {
+            border-style: solid;
+            border-color: var(--success);
+        }
+
+        .drop-icon {
+            font-size: 28px;
+            line-height: 1;
+        }
+
+        .drop-zone small {
+            color: var(--gray);
+        }
+
+        .drop-zone input[type="file"] {
+            display: none;
+        }
+
+        .convert-btn {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, var(--primary), var(--purple));
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .convert-btn:disabled,
+        .converter-field select:disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
+        }
+
+        .cancel-convert-btn {
+            padding: 12px 18px;
+            background: var(--danger);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .conversion-info,
+        .conversion-result {
+            margin-top: 20px;
+            padding: 16px 18px;
+            background: var(--light);
+            border-radius: 12px;
+            border-left: 4px solid var(--primary);
+        }
+
+        .conversion-info strong {
+            color: var(--dark);
+        }
+
+        .conversion-info small {
+            display: block;
+            color: var(--gray);
+            margin-top: 6px;
+        }
+
+        .conversion-progress {
+            margin-top: 20px;
+        }
+
+        .conversion-progress p {
+            margin-bottom: 8px;
+            color: var(--dark);
+            font-size: 0.95em;
+        }
+
+        .conversion-track {
+            height: 16px;
+            background: var(--border);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .conversion-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--primary), var(--success));
+            transition: width 0.2s;
+        }
+
+        .conversion-result a {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 10px 18px;
+            background: var(--success);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+        }
+
         .hidden {
             display: none !important;
         }
@@ -1352,6 +1529,16 @@
             .form-row-grid {
                 grid-template-columns: 1fr;
                 gap: 10px;
+            }
+
+            .converter-grid {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+
+            .convert-btn,
+            .cancel-convert-btn {
+                width: 100%;
             }
         }
         
@@ -1476,6 +1663,34 @@
             </div>
         </div>
 
+        <div class="converter-panel">
+            <h2><span>🔄</span> Conversor de Formatos</h2>
+            <p>Sube un archivo y elige una de las conversiones disponibles. El resultado se descarga al terminar.</p>
+            <div class="converter-grid">
+                <div class="converter-field">
+                    <label for="archivoConversion">Archivo a convertir</label>
+                    <div id="zonaArrastre" class="drop-zone" tabindex="0" role="button" aria-label="Arrastra un archivo aquí o haz clic para seleccionarlo">
+                        <span class="drop-icon">📂</span>
+                        <span id="textoZonaArrastre">Arrastra tu archivo aquí o haz clic para seleccionarlo</span>
+                        <small>PDF, EPUB, DOCX o TXT · máx. 50 MB</small>
+                        <input type="file" id="archivoConversion" accept=".pdf,.epub,.docx,.txt">
+                    </div>
+                </div>
+                <div class="converter-field">
+                    <label for="formatoDestino">Convertir a</label>
+                    <select id="formatoDestino" disabled><option>Sube un archivo primero</option></select>
+                </div>
+                <button id="btnConvertir" onclick="convertirArchivo()" class="convert-btn" disabled>⚙️ Convertir</button>
+                <button id="btnCancelarConversion" onclick="cancelarConversion()" class="cancel-convert-btn hidden">Cancelar</button>
+            </div>
+            <div id="conversionInfo" class="conversion-info hidden"></div>
+            <div id="progresoConversion" class="conversion-progress hidden">
+                <p id="estadoConversion">Preparando conversión...</p>
+                <div class="conversion-track"><div id="barraConversion" class="conversion-bar"></div></div>
+            </div>
+            <div id="resultadoConversion" class="conversion-result hidden"></div>
+        </div>
+
         <div class="controls">
             <div class="filter-section">
                 <div class="filter-group">
@@ -1575,6 +1790,7 @@
                         <li>⬇️ <strong>Los libros "No Encontrados"</strong> aparecen al final de la lista</li>
                         <li>🔄 <strong>Nuevo:</strong> Regenera enlaces de libros existentes</li>
                         <li>🔗 <strong>Nuevo:</strong> Gestiona y agrega tus propias plataformas de búsqueda</li>
+                        <li>🔄 <strong>Nuevo:</strong> Convierte PDF, EPUB, DOCX y TXT desde el panel convertidor</li>
                     </ul>
                 </div>
             </div>
@@ -3359,6 +3575,7 @@
         document.documentElement.style.webkitTapHighlightColor = 'transparent';
     }
 </script>
+<script src="conversor.js"></script>
 
 </body>
 </html>
